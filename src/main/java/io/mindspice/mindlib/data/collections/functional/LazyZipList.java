@@ -19,6 +19,19 @@ public class LazyZipList<A, B, C> implements List<C>, Collection<C> {
         this.biFunction = biFunction;
     }
 
+    public static <A, B, C> LazyZipList<A, B, C> ofCloned(List<A> listA, List<B> listB, BiFunction<A, B, C> biFunction) {
+        return new LazyZipList<>(new ArrayList<>(listA), new ArrayList<>(listB), biFunction);
+    }
+
+    public List<C> computeAll() {
+        List<C> rtnList = new ArrayList<>(size);
+        for (int i = 0; i < size; ++i) {
+            rtnList.add(biFunction.apply(listA.get(i), listB.get(i)));
+        }
+        return rtnList;
+    }
+
+    @Override
     public int size() { return size; }
 
     @Override
@@ -38,7 +51,7 @@ public class LazyZipList<A, B, C> implements List<C>, Collection<C> {
 
     @Override
     public Object[] toArray() {
-        return FuncUtils.zipOf(listA, listB, biFunction).toArray();
+        return computeAll().toArray();
     }
 
     @Override
