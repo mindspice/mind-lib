@@ -1,5 +1,8 @@
 package io.mindspice.mindlib.http;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.mindspice.mindlib.util.JsonUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
@@ -23,12 +26,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 
-public class UnsafeHttpClient {
+public class UnsafeHttpJsonClientOld {
     private final CloseableHttpClient client;
 
-    public UnsafeHttpClient() { this(5_000, 60_000, 300_000); }
+    public UnsafeHttpJsonClientOld() { this(5_000, 60_000, 300_000); }
 
-    public UnsafeHttpClient(int connTimeout, int reqTimeout, int socketTimeout) throws IllegalStateException {
+    public UnsafeHttpJsonClientOld(int connTimeout, int reqTimeout, int socketTimeout) throws IllegalStateException {
 
         try {
             RequestConfig requestConfig = RequestConfig.custom()
@@ -60,13 +63,12 @@ public class UnsafeHttpClient {
     public class HttpRequestBuilder {
         private String address;
         private int port = -1;
-        private int maxResponseSize = Integer.MAX_VALUE;
         private String username;
         private String password;
+        private int maxResponseSize = Integer.MAX_VALUE;
         private String path = "";
         private byte[] request;
         ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
-        private boolean returnAsBytes;
         private boolean asPost;
         private boolean asGet;
 
@@ -104,6 +106,16 @@ public class UnsafeHttpClient {
 
         public HttpRequestBuilder request(String request) {
             this.request = request.getBytes();
+            return this;
+        }
+
+        public HttpRequestBuilder request(JsonNode json) throws JsonProcessingException {
+            this.request = JsonUtils.writeBytes(json);
+            return this;
+        }
+
+        public HttpRequestBuilder request(Object object) throws JsonProcessingException {
+            this.request = JsonUtils.writeBytes(object);
             return this;
         }
 
@@ -152,6 +164,10 @@ public class UnsafeHttpClient {
 
         public byte[] makeAndGetBytes() throws IOException {
             return executeRequest();
+        }
+
+        public JsonNode makeAndGetJson() throws IOException {
+            return JsonUtils.readTree(executeRequest());
         }
 
         public String makeAndGetString() throws IOException {

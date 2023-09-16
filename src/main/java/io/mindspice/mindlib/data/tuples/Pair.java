@@ -1,4 +1,4 @@
-package io.mindspice.mindlib.data;
+package io.mindspice.mindlib.data.tuples;
 
 public record Pair<U, V>(U first, V second) {
     public static <U, V> Pair<U, V> of(U obj1, V obj2) {

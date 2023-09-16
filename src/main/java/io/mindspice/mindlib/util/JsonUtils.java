@@ -1,5 +1,6 @@
 package io.mindspice.mindlib.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,10 +18,12 @@ public abstract class JsonUtils {
     private static Map<Class<?>, ObjectReader> readerCache;
     private static Map<Class<?>, ObjectWriter> writerCache;
     private static Map<TypeReference, ObjectReader> typeRefCache; // Raw type use is necessary evil for caching
-    private static ObjectNode emptyNode;
+    private static final ObjectNode emptyNode;
 
     static {
-        mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
         readerCache = new ConcurrentHashMap<>(20);
         writerCache = new ConcurrentHashMap<>(20);
         typeRefCache = new ConcurrentHashMap<>(20);
@@ -29,6 +32,10 @@ public abstract class JsonUtils {
 
     public static void setFailOnUnknownProperties(boolean isFailOn) {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, isFailOn);
+    }
+
+    public static void setSerializationIncludeNull(boolean includeNull) {
+        mapper.setSerializationInclusion(includeNull ? JsonInclude.Include.ALWAYS : JsonInclude.Include.NON_NULL);
     }
 
     private JsonUtils() { }
@@ -57,19 +64,23 @@ public abstract class JsonUtils {
     }
 
     public static <T> T readJson(String json, Class<?> objClass) throws JsonProcessingException {
-        return JsonUtils.readerFor(objClass, false).readValue(json);
+        return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> T readJson(JsonNode json, Class<?> objClass) throws IOException {
-        return JsonUtils.readerFor(objClass, false).readValue(json);
+        return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> T readJson(byte[] json, Class<?> objClass) throws IOException {
-        return JsonUtils.readerFor(objClass, false).readValue(json);
+        return readerFor(objClass, false).readValue(json);
     }
 
     public static byte[] writeBytes(JsonNode json) throws JsonProcessingException {
         return mapper.writeValueAsBytes(json);
+    }
+
+    public static byte[] writeBytes(Object obj) throws JsonProcessingException {
+        return mapper.writeValueAsBytes(obj);
     }
 
     public static String writeString(JsonNode json) throws JsonProcessingException {
@@ -81,7 +92,11 @@ public abstract class JsonUtils {
     }
 
     public static <T> String writeString(T obj) throws JsonProcessingException {
-        return JsonUtils.writerFor(obj.getClass()).writeValueAsString(obj);
+        return writerFor(obj.getClass()).writeValueAsString(obj);
+    }
+
+    public static <T> String writePretty(T obj) throws JsonProcessingException {
+        return writerFor(obj.getClass()).withDefaultPrettyPrinter().writeValueAsString(obj);
     }
 
     public static ObjectMapper getMapper() {
@@ -144,7 +159,7 @@ public abstract class JsonUtils {
     }
 
     public static <T> T readJson(JsonParser json, TypeReference<T> typeRef) throws IOException {
-        return JsonUtils.writerForRef(typeRef).readValue(json, typeRef);
+        return writerForRef(typeRef).readValue(json, typeRef);
     }
 
     public static JsonNode merge(JsonNode node1, JsonNode node2) {
@@ -158,12 +173,14 @@ public abstract class JsonUtils {
     public static JsonNode successMsg(ObjectNode jsonNode) {
         jsonNode.put("error", false);
         jsonNode.put("success", true);
+        jsonNode.put("error_msg", "");
         return jsonNode;
     }
 
     public static JsonNode failMsg() {
         return new ObjectBuilder()
                 .put("error", false)
+                .put("error_msg", "")
                 .put("success", false)
                 .buildNode();
     }

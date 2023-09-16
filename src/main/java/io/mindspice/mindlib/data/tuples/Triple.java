@@ -1,4 +1,4 @@
-package io.mindspice.mindlib.data;
+package io.mindspice.mindlib.data.tuples;
 
 public record Triple<U, V, W>(U first, V second, W third) {
     public static <U, V, W> Triple<U, V, W> of(U obj1, V obj2, W obj3) {

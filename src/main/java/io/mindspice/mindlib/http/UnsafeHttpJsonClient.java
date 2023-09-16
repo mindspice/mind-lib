@@ -2,31 +2,30 @@ package io.mindspice.mindlib.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.mindspice.mindlib.util.JsonUtils;
-import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
 
 
@@ -64,13 +63,15 @@ public class UnsafeHttpJsonClient {
         return new HttpRequestBuilder();
     }
 
-    private class HttpRequestBuilder {
+    public class HttpRequestBuilder {
         private String address;
         private int port = -1;
+        private int maxResponseSize = Integer.MAX_VALUE;
         private String username;
         private String password;
-        private String requestString;
-        private byte[] requestBytes;
+        private String path = "";
+        private byte[] request;
+        ContentType contentType = ContentType.APPLICATION_OCTET_STREAM;
         private boolean returnAsBytes;
         private boolean asPost;
         private boolean asGet;
@@ -85,26 +86,48 @@ public class UnsafeHttpJsonClient {
             return this;
         }
 
+        public HttpRequestBuilder path(String path) {
+            this.path = path;
+            return this;
+        }
+
+        public HttpRequestBuilder maxResponseSize(int maxSize) {
+            this.maxResponseSize = maxSize;
+            return this;
+        }
+
+
         public HttpRequestBuilder credentials(String username, String password) {
             this.username = username;
             this.password = password;
             return this;
         }
 
-        public HttpRequestBuilder request(String request) {
-            this.requestString = request;
+        public HttpRequestBuilder contentType(ContentType contentType) {
+            this.contentType = contentType;
             return this;
         }
 
-        public HttpRequestBuilder request(JsonNode json) throws JsonProcessingException {
-            this.requestString = JsonUtils.writeString(json);
+        public HttpRequestBuilder request(String request) {
+            this.request = request.getBytes();
             return this;
         }
 
         public HttpRequestBuilder request(byte[] request) {
-            this.requestBytes = request;
+            this.request = request;
             return this;
         }
+
+        public HttpRequestBuilder request(JsonNode json) throws JsonProcessingException {
+            this.request = JsonUtils.writeBytes(json);
+            return this;
+        }
+
+        public HttpRequestBuilder request(Object object) throws JsonProcessingException {
+            this.request = JsonUtils.writeBytes(object);
+            return this;
+        }
+
 
         public HttpRequestBuilder asPost() {
             this.asPost = true;
@@ -116,53 +139,46 @@ public class UnsafeHttpJsonClient {
             return this;
         }
 
-        private byte[] executeRequest() {
-            if (address == null || port == -1) { throw new IllegalStateException("Must specify host and port"); }
-            HttpUriRequest request;
-
+        private byte[] executeRequest() throws IOException {
+            if (address == null) { throw new IllegalStateException("Must specify host"); }
+            URI uri = null;
             try {
-                if (asPost) {
-                    HttpEntity entity = requestBytes != null
-                            ? new ByteArrayEntity(requestBytes, ContentType.APPLICATION_OCTET_STREAM)
-                            : new StringEntity(requestString, ContentType.APPLICATION_JSON);
-                    request = RequestBuilder.post()
-                            .setUri(new URIBuilder()
-                                            .setHost(address)
-                                            .setPort(port)
-                                            .build())
-                            .addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8)))
-                            .setEntity(entity)
-                            .build();
-                } else if (asGet) {
-                    request = RequestBuilder.get()
-                            .setUri(new URIBuilder()
-                                            .setHost(address)
-                                            .setPort(port)
-                                            .build())
-                            .addHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8)))
-                            .build();
-                } else {
-                    { throw new IllegalStateException("Failed to set POST or GET"); }
-                }
+                uri = new URI(address + (port != -1 ? ":" + port : "") + path);
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Invalid URI: " + uri);
+            }
 
-                try (CloseableHttpResponse response = client.execute(request)) {
-                    return EntityUtils.toByteArray(response.getEntity());
-                }
-            } catch (Exception e) {
-                throw new IllegalStateException("Request Failed. Reason: " + e.getMessage() + " " + Arrays.toString(e.getStackTrace()));
+            HttpRequestBase httpReq = asPost ? new HttpPost(uri) : new HttpGet(uri);
+
+            if (httpReq instanceof HttpPost post && request != null) {
+                post.setEntity(new ByteArrayEntity(request));
+            }
+
+            httpReq.addHeader(HttpHeaders.CONTENT_TYPE, contentType.getMimeType());
+            if (username != null && password != null) {
+                httpReq.addHeader("Authorization", "Basic "
+                        + Base64.getEncoder().encodeToString((username
+                        + ":" + password).getBytes(StandardCharsets.UTF_8)));
+            }
+
+            try (CloseableHttpResponse response = client.execute(httpReq)) {
+                InputStream content =  new LimitedInputStream(response.getEntity().getContent(), maxResponseSize);
+                return content.readAllBytes();
             }
         }
 
-        public byte[] makeAndGetBytes() {
+        public byte[] makeAndGetBytes() throws IOException {
             return executeRequest();
+        }
+
+        public String makeAndGetString() throws IOException {
+            return new String(executeRequest(), StandardCharsets.UTF_8);
         }
 
         public JsonNode makeAndGetJson() throws IOException {
             return JsonUtils.readTree(executeRequest());
         }
 
-        public String makeAndGetString() {
-            return new String(executeRequest(), StandardCharsets.UTF_8);
-        }
+
     }
 }
