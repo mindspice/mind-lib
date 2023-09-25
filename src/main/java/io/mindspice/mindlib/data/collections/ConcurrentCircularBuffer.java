@@ -1,13 +1,10 @@
 package io.mindspice.mindlib.data.collections;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
-public class ConcurrentCircularBuffer<T> implements Iterable<T> {
+public class ConcurrentCircularBuffer<T> implements Iterable<T>{
     private final List<T> buffer;
     private final int capacity;
     private int head;

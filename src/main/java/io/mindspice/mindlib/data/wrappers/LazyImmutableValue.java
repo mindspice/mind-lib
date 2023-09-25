@@ -1,10 +1,12 @@
 package io.mindspice.mindlib.data.wrappers;
 
-public class ImmutableAfterSet<T> {
+public class LazyImmutableValue<T> {
     private T value;
-    private boolean isSet = false;
+    private volatile boolean isSet = false;
 
-    public ImmutableAfterSet(T initialValue) { value = initialValue; }
+    public LazyImmutableValue(T initialValue) { value = initialValue; }
+
+    public LazyImmutableValue() { this.value = null; }
 
     public synchronized void set(T value) {
         if (isSet) {
@@ -14,7 +16,14 @@ public class ImmutableAfterSet<T> {
         this.isSet = true;
     }
 
-    public T getValue() {
+    public boolean isSet() { return isSet; }
+
+    public T get() { return value; }
+
+    public T orElseThrowIfUnset() {
+        if (!isSet) { throw new IllegalStateException("Value has not been set"); }
         return value;
     }
+
+    public static <T> LazyImmutableValue<T> of(T value) { return new LazyImmutableValue<>(value); }
 }

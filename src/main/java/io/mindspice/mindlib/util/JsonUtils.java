@@ -17,7 +17,7 @@ public abstract class JsonUtils {
     private static ObjectMapper mapper;
     private static Map<Class<?>, ObjectReader> readerCache;
     private static Map<Class<?>, ObjectWriter> writerCache;
-    private static Map<TypeReference, ObjectReader> typeRefCache; // Raw type use is necessary evil for caching
+    private static Map<TypeReference<?>, ObjectReader> typeRefCache;
     private static final ObjectNode emptyNode;
 
     static {
@@ -129,6 +129,10 @@ public abstract class JsonUtils {
 
     public static <T> T readValue(InputStream json, Class<T> objClass) throws IOException {
         return mapper.readValue(json, objClass);
+    }
+
+    public static <T> JsonNode toNode(T obj) {
+        return mapper.valueToTree(obj);
     }
 
     public static <T> ObjectNode newSingleNode(String field, T value) {

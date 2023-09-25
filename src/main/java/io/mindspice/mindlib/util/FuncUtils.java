@@ -5,6 +5,7 @@ import io.mindspice.mindlib.data.tuples.Pair;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 
 public class FuncUtils {
@@ -43,7 +44,7 @@ public class FuncUtils {
         return result;
     }
 
-    public static <T> List<Set<T>> dualCombSetOf(Set<T> originalSet) {
+    public static <T> List<Set<T>> dualCombinationSetOf(Set<T> originalSet) {
         List<Set<T>> combinations = new ArrayList<>();
         List<T> originalList = new ArrayList<>(originalSet);
 
@@ -76,5 +77,25 @@ public class FuncUtils {
         return sets;
     }
 
+    @FunctionalInterface
+    public interface SupplierWithExceptions<T> {
+        T get() throws Exception;
+    }
+
+    public static <T> T defaultOnExcept(SupplierWithExceptions<T> supplier, T defaultValue) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static <T> T nullOnExcept(SupplierWithExceptions<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 }
