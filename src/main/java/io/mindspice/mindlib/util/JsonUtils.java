@@ -64,14 +64,18 @@ public abstract class JsonUtils {
     }
 
     public static <T> T readJson(String json, Class<?> objClass) throws JsonProcessingException {
+        if (json == null) { return null; }
         return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> T readJson(JsonNode json, Class<?> objClass) throws IOException {
+        if (json == null) { return null; }
+
         return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> T readJson(byte[] json, Class<?> objClass) throws IOException {
+        if (json == null) { return null; }
         return readerFor(objClass, false).readValue(json);
     }
 
@@ -104,30 +108,37 @@ public abstract class JsonUtils {
     }
 
     public static JsonNode readTree(String json) throws JsonProcessingException {
+        if (json == null) { return newEmptyNode(); }
         return mapper.readTree(json);
     }
 
     public static JsonNode readTree(byte[] json) throws IOException {
+        if (json == null) { return newEmptyNode(); }
         return mapper.readTree(json);
     }
 
     public static JsonNode readTree(JsonNode json) throws IOException {
+        if (json == null) { return newEmptyNode(); }
         return mapper.readTree(json.traverse());
     }
 
     public static <T> T readValue(String json, Class<T> objClass) throws JsonProcessingException {
+        if (json == null) { return null; }
         return mapper.readValue(json, objClass);
     }
 
     public static <T> T readValue(byte[] json, Class<T> objClass) throws IOException {
+        if (json == null) { return null; }
         return mapper.readValue(json, objClass);
     }
 
     public static <T> T readValue(JsonParser json, Class<T> objClass) throws IOException {
+        if (json == null) { return null; }
         return mapper.readValue(json, objClass);
     }
 
     public static <T> T readValue(InputStream json, Class<T> objClass) throws IOException {
+        if (json == null) { return null; }
         return mapper.readValue(json, objClass);
     }
 
