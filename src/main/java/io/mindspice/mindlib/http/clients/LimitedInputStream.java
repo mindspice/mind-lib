@@ -1,4 +1,4 @@
-package io.mindspice.mindlib.http;
+package io.mindspice.mindlib.http.clients;
 
 import java.io.IOException;
 import java.io.InputStream;
