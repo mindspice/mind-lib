@@ -19,6 +19,7 @@ public class IMutVector2 implements Vector2 {
         this.y = other.y();
     }
 
+
     @Override
     public int x() {
         return x;

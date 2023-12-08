@@ -13,6 +13,14 @@ public record IVector2(
         this(other.x(), other.y());
     }
 
+    public static IVector2 of(int x, int y) {
+        return new IVector2(x, y);
+    }
+
+    public static IVector2 of(float x, float y) {
+        return new IVector2(x, y);
+    }
+
     public IMutVector2 asIMutVector2() {
         return new IMutVector2(this);
     }
