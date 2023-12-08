@@ -1,34 +1,34 @@
-package io.mindspice.mindlib.data.collections.primative.lists;
+package io.mindspice.mindlib.data.collections.lists.primative;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.function.IntConsumer;
+import java.util.function.DoubleConsumer;
 
 
-public class IntList {
-    private int[] dataElements;
+public class DoubleList {
+    private double[] dataElements;
     private int size = 0;
 
-    public IntList(int initialSize) {
-        dataElements = new int[initialSize];
+    public DoubleList(int initialSize) {
+        dataElements = new double[initialSize];
     }
 
-    public IntList(List<Integer> integerList) {
-        size = integerList.size();
-        dataElements = new int[size];
+    public DoubleList(List<Double> doubleList) {
+        size = doubleList.size();
+        dataElements = new double[size];
         for (int i = 0; i < size; ++i) {
-            dataElements[i] = integerList.get(i);
+            dataElements[i] = doubleList.get(i);
         }
     }
 
-    public IntList(int[] intList) {
-        size = intList.length;
-        dataElements = Arrays.copyOf(intList, size * 2); // Initialize with double capacity
+    public DoubleList(double[] doubleList) {
+        size = doubleList.length;
+        dataElements = Arrays.copyOf(doubleList, size * 2); // Initialize with double capacity
     }
 
-    public IntList() {
-        dataElements = new int[10];
+    public DoubleList() {
+        dataElements = new double[10];
     }
 
     public int size() {
@@ -39,35 +39,35 @@ public class IntList {
         return size == 0;
     }
 
-    public boolean contains(int val) {
+    public boolean contains(double val) {
         for (int i = 0; i < size; ++i) {
             if (dataElements[i] == val) return true;
         }
         return false;
     }
 
-    public int[] toArray() {
+    public double[] toArray() {
         return Arrays.copyOf(dataElements, size);
     }
 
-    public void forEach(IntConsumer action) {
+    public void forEach(DoubleConsumer action) {
         for (int i = 0; i < size; i++) {
             action.accept(dataElements[i]);
         }
     }
 
-    public IntIterator iterator() {
-        return new IntIterator();
+    public DoubleIterator iterator() {
+        return new DoubleIterator();
     }
 
-    private class IntIterator {
+    private class DoubleIterator {
         private int index = 0;
 
         public boolean hasNext() {
             return index < size;
         }
 
-        public int next() {
+        public double next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
@@ -75,7 +75,7 @@ public class IntList {
         }
     }
 
-    public boolean add(int i) {
+    public boolean add(double i) {
         if (dataElements.length == size) {
             int newCapacity = dataElements.length * 2;  // Doubling the current capacity
             dataElements = Arrays.copyOf(dataElements, newCapacity);
@@ -84,47 +84,45 @@ public class IntList {
         return true;
     }
 
-    public int get(int index) {
-        if (index < 0 || index > size -1) { throw new ArrayIndexOutOfBoundsException(); }
+    public double get(int index) {
+        if (index < 0 || index > size - 1) { throw new ArrayIndexOutOfBoundsException(); }
         return dataElements[index];
     }
 
-    public boolean addAll(List<Integer> list) {
+    public boolean addAll(List<Double> list) {
         int requiredCapacity = size + list.size();
         if (dataElements.length < requiredCapacity) {
             int newCapacity = Math.max(dataElements.length * 2, requiredCapacity);
             dataElements = Arrays.copyOf(dataElements, newCapacity);
         }
-        for (int val : list) {
+        for (double val : list) {
             dataElements[size++] = val;
         }
         return true;
     }
 
-
-    public boolean addAll(IntList list) {
+    public boolean addAll(DoubleList list) {
         int requiredCapacity = size + list.size();
         if (dataElements.length < requiredCapacity) {
             int newCapacity = Math.max(dataElements.length * 2, requiredCapacity);
             dataElements = Arrays.copyOf(dataElements, newCapacity);
         }
-        for(int i = 0; i < list.size; ++i) {
+        for (int i = 0; i < list.size; ++i) {
             dataElements[size++] = list.dataElements[i];
         }
         return true;
     }
 
-    public boolean addAll(int[] arr) {
+    public boolean addAll(double[] arr) {
         int requiredCapacity = size + arr.length;
         if (dataElements.length < requiredCapacity) {
             int newCapacity = Math.max(dataElements.length * 2, requiredCapacity);
             dataElements = Arrays.copyOf(dataElements, newCapacity);
         }
 
-        for(int i = 0; i < arr.length; ++i) {
+        for (int i = 0; i < arr.length; ++i) {
             dataElements[size++] = arr[i];
         }
-
         return true;
     }
 
@@ -136,32 +134,36 @@ public class IntList {
     }
 
     public void clear() {
-        dataElements = new int[10];
+        dataElements = new double[10];
         size = 0;
     }
 
     @Override
     public int hashCode() {
-        int result = 1;
+        long result = 1L;
         for (int i = 0; i < size; i++) {
-            result = 31 * result + dataElements[i];
+            double val = dataElements[i];
+            long bits = Double.doubleToLongBits(val);
+            result = 31L * result + bits;
         }
-        return result;
+        return (int) (result ^ (result >>> 32));
     }
 
-    @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
 
-        IntList other = (IntList) obj;
+        DoubleList other = (DoubleList) obj;
         if (size != other.size) return false;
+        double epsilon = 1E-5f;
 
         for (int i = 0; i < size; i++) {
-            if (dataElements[i] != other.dataElements[i]) {
+            if (Math.abs(dataElements[i] - other.dataElements[i]) > epsilon) {
                 return false;
             }
         }
         return true;
     }
+
+
 }

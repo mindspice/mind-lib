@@ -1,12 +1,12 @@
 package io.mindspice.mindlib.data.wrappers;
 
-public class LazyImmutableValue<T> {
+public class LazyFinalValue<T> {
     private T value;
     private volatile boolean isSet = false;
 
-    public LazyImmutableValue(T initialValue) { value = initialValue; }
+    public LazyFinalValue(T initialValue) { value = initialValue; }
 
-    public LazyImmutableValue() { this.value = null; }
+    public LazyFinalValue() { this.value = null; }
 
     public synchronized void set(T value) {
         if (isSet) {
@@ -16,7 +16,7 @@ public class LazyImmutableValue<T> {
         this.isSet = true;
     }
 
-    public boolean isSet() { return isSet; }
+    public boolean isFinal() { return isSet; }
 
     public T get() { return value; }
 
@@ -25,5 +25,5 @@ public class LazyImmutableValue<T> {
         return value;
     }
 
-    public static <T> LazyImmutableValue<T> of(T value) { return new LazyImmutableValue<>(value); }
+    public static <T> LazyFinalValue<T> of(T value) { return new LazyFinalValue<>(value); }
 }

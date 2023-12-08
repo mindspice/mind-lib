@@ -1,4 +1,4 @@
-package io.mindspice.mindlib.data.collections.primative.lists;
+package io.mindspice.mindlib.data.collections.lists.primative;
 
 import java.util.Arrays;
 import java.util.List;

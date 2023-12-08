@@ -34,6 +34,7 @@ public class HttpRequestBuilder {
     private boolean returnAsBytes;
     private boolean asPost;
     private boolean asGet;
+    private boolean debug = false;
 
     public HttpRequestBuilder(CloseableHttpClient client) {
         this.client = client;
@@ -46,6 +47,11 @@ public class HttpRequestBuilder {
 
     public HttpRequestBuilder port(int port) {
         this.port = port;
+        return this;
+    }
+
+    public HttpRequestBuilder setDebug(){
+        debug = true;
         return this;
     }
 
@@ -120,6 +126,9 @@ public class HttpRequestBuilder {
             try {
                 uri = uriBuilder.build();
                 httpReq = new HttpGet(uri);
+                if (debug) {
+                    System.out.println(httpReq.getURI());
+                }
             } catch (URISyntaxException e) {
                 throw new IllegalArgumentException("Invalid URI: " + uri);
             }
@@ -140,6 +149,7 @@ public class HttpRequestBuilder {
                 return content.readAllBytes();
             }
         }
+
 
         try (CloseableHttpResponse response = client.execute(httpReq)) {
             InputStream content = new LimitedInputStream(response.getEntity().getContent(), maxResponseSize);

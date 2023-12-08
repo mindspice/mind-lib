@@ -37,6 +37,7 @@ public class HttpJsonRequestBuilder {
     private boolean returnAsBytes;
     private boolean asPost;
     private boolean asGet;
+    private boolean debug = false;
 
     public HttpJsonRequestBuilder(CloseableHttpClient client) {
         this.client = client;
@@ -49,6 +50,11 @@ public class HttpJsonRequestBuilder {
 
     public HttpJsonRequestBuilder port(int port) {
         this.port = port;
+        return this;
+    }
+
+    public HttpJsonRequestBuilder setDebug() {
+        debug = true;
         return this;
     }
 
@@ -123,6 +129,9 @@ public class HttpJsonRequestBuilder {
             try {
                 uri = uriBuilder.build();
                 httpReq = new HttpGet(uri);
+                if (debug) {
+                    System.out.println(httpReq.getURI());
+                }
             } catch (URISyntaxException e) {
                 throw new IllegalArgumentException("Invalid URI: " + uri);
             }
@@ -143,6 +152,7 @@ public class HttpJsonRequestBuilder {
                 return content.readAllBytes();
             }
         }
+
 
         try (CloseableHttpResponse response = client.execute(httpReq)) {
             InputStream content = new LimitedInputStream(response.getEntity().getContent(), maxResponseSize);

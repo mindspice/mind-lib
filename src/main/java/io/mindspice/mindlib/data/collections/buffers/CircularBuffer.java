@@ -1,4 +1,4 @@
-package io.mindspice.mindlib.data.collections;
+package io.mindspice.mindlib.data.collections.buffers;
 
 import java.util.ArrayList;
 import java.util.Iterator;
