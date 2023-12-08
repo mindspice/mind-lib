@@ -1,6 +1,6 @@
 package io.mindspice.mindlib.data.geometry;
 
-public class IMutVector2 {
+public class IMutVector2 implements Vector2 {
     private int x;
     private int y;
 
@@ -19,10 +19,12 @@ public class IMutVector2 {
         this.y = other.y();
     }
 
+    @Override
     public int x() {
         return x;
     }
 
+    @Override
     public int y() {
         return y;
     }
@@ -52,88 +54,104 @@ public class IMutVector2 {
         return new IMutVector2(x, y);
     }
 
+    @Override
     public IMutVector2 withXInc() {
         x += 1;
         return this;
     }
 
+    @Override
     public IMutVector2 withYInc() {
         y += 1;
         return this;
     }
 
+    @Override
     public IMutVector2 withXDec() {
         x -= 1;
         return this;
     }
 
+    @Override
     public IMutVector2 withYDec() {
         y -= 1;
         return this;
     }
 
+    @Override
     public IMutVector2 add(IMutVector2 other) {
         this.x += other.x;
         this.y += other.y;
         return this;
     }
 
+    @Override
     public IMutVector2 add(IVector2 other) {
         this.x += other.x();
         this.y += other.y();
         return this;
     }
 
+    @Override
     public IMutVector2 subtract(IMutVector2 other) {
         this.x -= other.x;
         this.y -= other.y;
         return this;
     }
 
+    @Override
     public IMutVector2 subtract(IVector2 other) {
         this.x -= other.x();
         this.y -= other.y();
         return this;
     }
 
+    @Override
     public IMutVector2 multiply(IMutVector2 other) {
         this.x *= other.x;
         this.y *= other.y;
         return this;
     }
 
+    @Override
     public IMutVector2 multiply(IVector2 other) {
         this.x *= other.x();
         this.y *= other.y();
         return this;
     }
 
+    @Override
     public IMutVector2 divide(IMutVector2 other) {
         this.x /= other.x;
         this.y /= other.y;
         return this;
     }
 
+    @Override
     public IMutVector2 divide(IVector2 other) {
         this.x /= other.x();
         this.y /= other.y();
         return this;
     }
 
+    @Override
     public IMutVector2 scalarMultiplication(int scalar) {
         this.x *= scalar;
         this.y *= scalar;
         return this;
     }
 
+    @Override
     public int dotProduct(IMutVector2 other) {
         return (this.x * other.x) + (this.y * other.y);
     }
 
+    @Override
     public int dotProduct(IVector2 other) {
         return (this.x * other.x()) + (this.y * other.y());
     }
 
+    @Override
     public double magnitude() {
         return Math.sqrt((x * x) + (y * y));
     }
