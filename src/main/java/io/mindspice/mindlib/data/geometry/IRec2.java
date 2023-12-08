@@ -93,7 +93,7 @@ public record IRec2(
 
     @Override
     public String toString() {
-        return "(" + start + "), (" + size + ")";
+        return "(" + start + ", " + size + ")";
     }
 
     @Override
