@@ -6,7 +6,7 @@
 
     <groupId>io.mindspice</groupId>
     <artifactId>mind-lib</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
