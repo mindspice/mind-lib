@@ -134,6 +134,13 @@ public class IMutVector2 implements IVector2 {
     }
 
     @Override
+    public IVector2 modulo(int divisor) {
+        this.x %= divisor;
+        this.y %= divisor;
+        return this;
+    }
+
+    @Override
     public int dotProduct(IVector2 other) {
         return (this.x * other.x()) + (this.y * other.y());
     }

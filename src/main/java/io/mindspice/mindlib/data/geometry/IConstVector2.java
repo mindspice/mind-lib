@@ -9,7 +9,6 @@ public record IConstVector2(
         this((int) x, (int) y);
     }
 
-
     IConstVector2(IVector2 other) {
         this(other.x(), other.y());
     }
@@ -83,6 +82,11 @@ public record IConstVector2(
     @Override
     public IConstVector2 scalarMultiplication(int scalar) {
         return new IConstVector2(this.x * scalar, this.y * scalar);
+    }
+
+    @Override
+    public IVector2 modulo(int divisor) {
+        return new IConstVector2(this.x % divisor, this.y % divisor);
     }
 
     @Override
