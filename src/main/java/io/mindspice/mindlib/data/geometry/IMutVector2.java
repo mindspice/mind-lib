@@ -1,24 +1,23 @@
 package io.mindspice.mindlib.data.geometry;
 
-public class IMutVector2 implements Vector2 {
+public class IMutVector2 implements IVector2 {
     private int x;
     private int y;
 
-    public IMutVector2(int x, int y) {
+    IMutVector2(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    public IMutVector2(float x, float y) {
+    IMutVector2(float x, float y) {
         x = (int) x;
         y = (int) y;
     }
 
-    public IMutVector2(IVector2 other) {
+    IMutVector2(IVector2 other) {
         this.x = other.x();
         this.y = other.y();
     }
-
 
     @Override
     public int x() {
@@ -43,16 +42,8 @@ public class IMutVector2 implements Vector2 {
         this.y = y;
     }
 
-    public IVector2 asIVector2() {
-        return new IVector2(this);
-    }
-
-    public static IMutVector2 of(int x, int y) {
-        return new IMutVector2(x, y);
-    }
-
-    public static IMutVector2 of(float x, float y) {
-        return new IMutVector2(x, y);
+    public IConstVector2 asImmutable() {
+        return new IConstVector2(this);
     }
 
     @Override
@@ -80,13 +71,6 @@ public class IMutVector2 implements Vector2 {
     }
 
     @Override
-    public IMutVector2 add(IMutVector2 other) {
-        this.x += other.x;
-        this.y += other.y;
-        return this;
-    }
-
-    @Override
     public IMutVector2 add(IVector2 other) {
         this.x += other.x();
         this.y += other.y();
@@ -94,9 +78,9 @@ public class IMutVector2 implements Vector2 {
     }
 
     @Override
-    public IMutVector2 subtract(IMutVector2 other) {
-        this.x -= other.x;
-        this.y -= other.y;
+    public IVector2 add(int x, int y) {
+        this.x += x;
+        this.y += y;
         return this;
     }
 
@@ -108,9 +92,9 @@ public class IMutVector2 implements Vector2 {
     }
 
     @Override
-    public IMutVector2 multiply(IMutVector2 other) {
-        this.x *= other.x;
-        this.y *= other.y;
+    public IVector2 subtract(int x, int y) {
+        this.x -= x;
+        this.y -= y;
         return this;
     }
 
@@ -122,9 +106,9 @@ public class IMutVector2 implements Vector2 {
     }
 
     @Override
-    public IMutVector2 divide(IMutVector2 other) {
-        this.x /= other.x;
-        this.y /= other.y;
+    public IVector2 multiply(int x, int y) {
+        this.x *= x;
+        this.y *= y;
         return this;
     }
 
@@ -136,6 +120,13 @@ public class IMutVector2 implements Vector2 {
     }
 
     @Override
+    public IVector2 divide(int x, int y) {
+        this.x /= x;
+        this.y /= y;
+        return this;
+    }
+
+    @Override
     public IMutVector2 scalarMultiplication(int scalar) {
         this.x *= scalar;
         this.y *= scalar;
@@ -143,13 +134,13 @@ public class IMutVector2 implements Vector2 {
     }
 
     @Override
-    public int dotProduct(IMutVector2 other) {
-        return (this.x * other.x) + (this.y * other.y);
+    public int dotProduct(IVector2 other) {
+        return (this.x * other.x()) + (this.y * other.y());
     }
 
     @Override
-    public int dotProduct(IVector2 other) {
-        return (this.x * other.x()) + (this.y * other.y());
+    public int dotProduct(int x, int y) {
+        return (this.x * x) + (this.y * y);
     }
 
     @Override
@@ -165,10 +156,9 @@ public class IMutVector2 implements Vector2 {
     @Override
     public boolean equals(Object o) {
         if (this == o) { return true; }
-        if (o == null || getClass() != o.getClass()) { return false; }
-        IMutVector2 iVector2 = (IMutVector2) o;
-        if (x != iVector2.x) { return false; }
-        return y == iVector2.y;
+        if (!(o instanceof IVector2 iVector2)) { return false; }
+        if (x != iVector2.x()) { return false; }
+        return y == iVector2.y();
     }
 
     @Override
