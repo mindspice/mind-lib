@@ -29,8 +29,8 @@ public class IMutRec2 implements IRect2 {
         this.size = new IMutVector2(other.size());
     }
 
-    public IConstRect asIRec2() {
-        return new IConstRect(this);
+    public IConstRect2 asIRec2() {
+        return new IConstRect2(this);
     }
 
     @Override

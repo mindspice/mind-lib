@@ -1,12 +1,12 @@
 package io.mindspice.mindlib.data.geometry;
 
-public record IConstRect(
+public record IConstRect2(
         IVector2 start,
         IVector2 end,
         IVector2 size
 ) implements IRect2 {
 
-    IConstRect(int x, int y, int width, int height) {
+    IConstRect2(int x, int y, int width, int height) {
         this(
                 new IConstVector2(x, y),
                 new IConstVector2(x + width, y + height),
@@ -14,7 +14,7 @@ public record IConstRect(
         );
     }
 
-    IConstRect(IVector2 start, IVector2 size) {
+    IConstRect2(IVector2 start, IVector2 size) {
         this(
                 start,
                 new IConstVector2(start.x() + size.x(), start.y() + size.y()),
@@ -22,7 +22,7 @@ public record IConstRect(
         );
     }
 
-    IConstRect(IMutRec2 other) {
+    IConstRect2(IMutRec2 other) {
         this(
                 other.start().asImmutable(),
                 other.end().asImmutable(),
@@ -64,7 +64,7 @@ public record IConstRect(
     }
 
     @Override
-    public IConstRect combine(IRect2 other) {
+    public IConstRect2 combine(IRect2 other) {
         IConstVector2 newStart = new IConstVector2(
                 Math.min(start.x(), other.start().x()),
                 Math.min(start.y(), other.start().y())
@@ -73,7 +73,7 @@ public record IConstRect(
                 Math.max(end.x(), other.end().x()),
                 Math.max(end.y(), other.end().y())
         );
-        return new IConstRect(
+        return new IConstRect2(
                 newStart,
                 newEnd,
                 new IConstVector2(newEnd.x() - newStart.x(), newEnd.y() - newStart.y())
@@ -88,13 +88,10 @@ public record IConstRect(
     @Override
     public boolean equals(Object o) {
         if (this == o) { return true; }
-        if (o == null || getClass() != o.getClass()) { return false; }
-
-        IConstRect iConstRect = (IConstRect) o;
-
-        if (!start.equals(iConstRect.start)) { return false; }
-        if (!end.equals(iConstRect.end)) { return false; }
-        return size.equals(iConstRect.size);
+        if (!(o instanceof IRect2 iRect2)) { return false; }
+        if (!start.equals(iRect2.start())) { return false; }
+        if (!end.equals(iRect2.end())) { return false; }
+        return size.equals(iRect2.size());
     }
 
     @Override

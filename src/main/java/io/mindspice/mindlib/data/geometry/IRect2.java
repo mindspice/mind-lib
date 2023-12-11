@@ -21,11 +21,11 @@ public interface IRect2 {
     IVector2 size();
 
     static IRect2 of(int x, int y, int width, int height) {
-        return new IConstRect(new IConstVector2(x, y), new IConstVector2(width, height));
+        return new IConstRect2(new IConstVector2(x, y), new IConstVector2(width, height));
     }
 
     static IRect2 of(IVector2 start, IVector2 size) {
-        return new IConstRect(start, size);
+        return new IConstRect2(start, size);
     }
 
     static IMutRec2 ofMutable(int x, int y, int width, int height) {
@@ -37,14 +37,14 @@ public interface IRect2 {
     }
 
     static IRect2 fromCenter(IVector2 center, IVector2 size) {
-        return new IConstRect(
+        return new IConstRect2(
                 new IConstVector2(center.x() - (size.x() / 2), center.y() - (size.y() / 2)),
                 size
         );
     }
 
     static IRect2 fromCenter(int x, int y, int width, int height) {
-        return new IConstRect(new IConstVector2(x - (width / 2), y + (height / 2)), new IConstVector2(width, height));
+        return new IConstRect2(new IConstVector2(x - (width / 2), y + (height / 2)), new IConstVector2(width, height));
     }
 
     static IMutRec2 fromCenterMutable(IVector2 center, IVector2 size) {
