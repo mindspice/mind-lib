@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public record IPolygon(
+public record IPolygon2(
         IVector2[] points
 ) {
     public boolean contains(IVector2 point) {
@@ -81,11 +81,11 @@ public record IPolygon(
         if (this == o) { return true; }
         if (o == null || getClass() != o.getClass()) { return false; }
 
-        IPolygon iPolygon = (IPolygon) o;
-        if (iPolygon.points == points()) { return true; }
-        if (iPolygon.points.length != points.length) { return false; }
+        IPolygon2 iPolygon2 = (IPolygon2) o;
+        if (iPolygon2.points == points()) { return true; }
+        if (iPolygon2.points.length != points.length) { return false; }
         for (int i = 0; i < points.length; ++i) {
-            if (!points[i].equals(iPolygon.points[i])) {
+            if (!points[i].equals(iPolygon2.points[i])) {
                 return false;
             }
         }
@@ -110,8 +110,8 @@ public record IPolygon(
             return this;
         }
 
-        public IPolygon build() {
-            return new IPolygon(points.toArray(IVector2[]::new));
+        public IPolygon2 build() {
+            return new IPolygon2(points.toArray(IVector2[]::new));
         }
 
 
