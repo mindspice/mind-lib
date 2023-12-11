@@ -80,13 +80,22 @@ public record IConstVector2(
     }
 
     @Override
-    public IConstVector2 scalarMultiplication(int scalar) {
+    public IConstVector2 scale(int scalar) {
         return new IConstVector2(this.x * scalar, this.y * scalar);
     }
 
     @Override
     public IVector2 modulo(int divisor) {
         return new IConstVector2(this.x % divisor, this.y % divisor);
+    }
+
+    @Override
+    public IVector2 normalize() {
+        double magnitude = magnitude();
+        if (magnitude == 0) {
+            return new IConstVector2(0, 0); // Avoid division by zero; return zero vector
+        }
+        return new IConstVector2((float) (x / magnitude), (float) (y / magnitude));
     }
 
     @Override

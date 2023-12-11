@@ -8,6 +8,8 @@ public interface ILine2 {
 
     boolean intersects(ILine2 other);
 
+    double distance();
+
     static IConstLine2 of(int startX, int startY, int endX, int endY) {
         return new IConstLine2(startX, startY, endX, endY);
     }

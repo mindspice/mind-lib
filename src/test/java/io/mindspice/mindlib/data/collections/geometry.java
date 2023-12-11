@@ -1,8 +1,7 @@
 package io.mindspice.mindlib.data.collections;
 
 import io.mindspice.mindlib.data.geometry.ILine2;
-import io.mindspice.mindlib.data.geometry.IPolygon;
-import io.mindspice.mindlib.data.geometry.IVector2;
+import io.mindspice.mindlib.data.geometry.IPolygon2;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
@@ -17,7 +16,7 @@ public class geometry {
 
     @Test
     void polygonTest() {
-        IPolygon poly = new IPolygon.Builder()
+        IPolygon2 poly = new IPolygon2.Builder()
                 .addPoint(20, 10)
                 .addPoint(70, 10)
                 .addPoint(40, 20)

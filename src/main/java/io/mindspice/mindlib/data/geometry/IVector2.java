@@ -25,9 +25,11 @@ public interface IVector2 {
 
     IVector2 divide(int x, int y);
 
-    IVector2 scalarMultiplication(int scalar);
+    IVector2 scale(int scalar);
 
     IVector2 modulo(int divisor);
+
+    IVector2 normalize();
 
     int dotProduct(IVector2 other);
 

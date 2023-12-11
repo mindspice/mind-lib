@@ -28,6 +28,15 @@ public record IPolygon2(
         return inside;
     }
 
+
+    public static IPolygon2 of(IVector2[] points) {
+        return new IPolygon2(points);
+    }
+
+    public static IPolygon2 of(List<IVector2> points) {
+        return new IPolygon2(points.toArray(new IVector2[0]));
+    }
+
     public boolean intersects(int startX, int startY, int endX, int endY) {
         return intersects(ILine2.of(startX, startY, endX, endY));
     }

@@ -127,7 +127,7 @@ public class IMutVector2 implements IVector2 {
     }
 
     @Override
-    public IMutVector2 scalarMultiplication(int scalar) {
+    public IMutVector2 scale(int scalar) {
         this.x *= scalar;
         this.y *= scalar;
         return this;
@@ -137,6 +137,19 @@ public class IMutVector2 implements IVector2 {
     public IVector2 modulo(int divisor) {
         this.x %= divisor;
         this.y %= divisor;
+        return this;
+    }
+
+    @Override
+    public IVector2 normalize() {
+        double magnitude = magnitude();
+        if (magnitude == 0) {
+            x = 0;
+            y = 0;
+            return this;
+        }
+        x = (int) (x / magnitude);
+        y = (int) (y / magnitude);
         return this;
     }
 

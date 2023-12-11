@@ -25,6 +25,13 @@ public record IConstLine2(
     }
 
     @Override
+    public double distance() {
+        double deltaX = end.x() - start.x();
+        double deltaY = end.y() - start.y();
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+
+    @Override
     public boolean intersects(ILine2 otherLine) {
         // Find the four orientations needed for general and
         // special cases
