@@ -25,4 +25,5 @@ public interface ILine2 {
     static IMutLine2 ofMutable(IVector2 start, IVector2 end) {
         return new IMutLine2(start, end);
     }
+
 }

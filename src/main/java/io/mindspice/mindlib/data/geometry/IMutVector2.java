@@ -10,8 +10,8 @@ public class IMutVector2 implements IVector2 {
     }
 
     IMutVector2(float x, float y) {
-        x = (int) x;
-        y = (int) y;
+        this.x = (int) x;
+        this.y = (int) y;
     }
 
     IMutVector2(IVector2 other) {
@@ -37,9 +37,11 @@ public class IMutVector2 implements IVector2 {
         this.y = y;
     }
 
-    public void setXY(int x, int y) {
+
+    public IMutVector2 setXY(int x, int y) {
         this.x = x;
         this.y = y;
+        return this;
     }
 
     public IConstVector2 asImmutable() {

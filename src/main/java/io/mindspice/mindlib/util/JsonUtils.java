@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// TODO, Test the reader cache, using a writer cache offers no speed up
 
 public abstract class JsonUtils {
     private static ObjectMapper mapper;
@@ -83,8 +84,8 @@ public abstract class JsonUtils {
         return mapper.writeValueAsBytes(json);
     }
 
-    public static byte[] writeBytes(Object obj) throws JsonProcessingException {
-        return mapper.writeValueAsBytes(obj);
+    public static <T> byte[] writeBytes(T obj) throws JsonProcessingException {
+        return writerFor(obj.getClass()).writeValueAsBytes(obj);
     }
 
     public static String writeString(JsonNode json) throws JsonProcessingException {
@@ -124,22 +125,23 @@ public abstract class JsonUtils {
 
     public static <T> T readValue(String json, Class<T> objClass) throws JsonProcessingException {
         if (json == null) { return null; }
-        return mapper.readValue(json, objClass);
+        return readerFor(objClass, false).readValue(json);
+
     }
 
     public static <T> T readValue(byte[] json, Class<T> objClass) throws IOException {
         if (json == null) { return null; }
-        return mapper.readValue(json, objClass);
+        return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> T readValue(JsonParser json, Class<T> objClass) throws IOException {
         if (json == null) { return null; }
-        return mapper.readValue(json, objClass);
+        return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> T readValue(InputStream json, Class<T> objClass) throws IOException {
         if (json == null) { return null; }
-        return mapper.readValue(json, objClass);
+        return readerFor(objClass, false).readValue(json);
     }
 
     public static <T> JsonNode toNode(T obj) {

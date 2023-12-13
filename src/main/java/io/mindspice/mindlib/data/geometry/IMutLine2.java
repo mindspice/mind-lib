@@ -15,12 +15,12 @@ public class IMutLine2 implements ILine2 {
     }
 
     @Override
-    public IVector2 start() {
+    public IMutVector2 start() {
         return start;
     }
 
     @Override
-    public IVector2 end() {
+    public IMutVector2 end() {
         return end;
     }
 

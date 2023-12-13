@@ -13,6 +13,8 @@ public interface IVector2 {
 
     IVector2 add(int x, int y);
 
+    IVector2 setXY(int x, int y);
+
     IVector2 subtract(IVector2 other);
 
     IVector2 subtract(int x, int y);
@@ -64,5 +66,6 @@ public interface IVector2 {
     static IMutVector2 ofMutable(IVector2 other) {
         return new IMutVector2(other);
     }
+
 
 }
