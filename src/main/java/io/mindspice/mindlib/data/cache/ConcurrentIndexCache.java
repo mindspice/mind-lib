@@ -202,8 +202,13 @@ public class ConcurrentIndexCache<T> {
         }
     }
 
+    /**
+     * Performs a consumer operation on all non-null elements of the array
+     * WARNING: No visibility, or thread safety guarantees can be made,
+     * thread safety is dependent on the objects own guarantees.
+     */
     public void forEach(Consumer<T> consumer) {
-        long stamp = lock.writeLock();
+        long stamp = lock.readLock();
         try {
             elements.forEach(consumer);
         } finally {
@@ -211,6 +216,11 @@ public class ConcurrentIndexCache<T> {
         }
     }
 
+    /**
+     * Returns a stream backed by the internal array.
+     * WARNING: A concurrent removal from another thread during streaming
+     * may produce a null pointer exception.
+     */
     public Stream<T> stream() {
         long stamp = lock.tryOptimisticRead();
         Stream<T> stream = elements.stream();
