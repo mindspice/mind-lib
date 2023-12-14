@@ -5,7 +5,6 @@ import io.mindspice.mindlib.data.collections.maps.IndexMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -202,6 +201,17 @@ public class ConcurrentIndexCache<T> {
         }
     }
 
+    public List<T> filterAndGet(Predicate<T> predicate) {
+        long stamp = lock.readLock();
+        List<T> filteredElements;
+        try {
+            filteredElements = elements.stream().filter(predicate).toList();
+        } finally {
+            lock.unlockRead(stamp);
+        }
+        return filteredElements;
+    }
+
     /**
      * Performs a consumer operation on all non-null elements of the array
      * WARNING: No visibility, or thread safety guarantees can be made,
@@ -212,7 +222,7 @@ public class ConcurrentIndexCache<T> {
         try {
             elements.forEach(consumer);
         } finally {
-            lock.unlockWrite(stamp);
+            lock.unlockRead(stamp);
         }
     }
 

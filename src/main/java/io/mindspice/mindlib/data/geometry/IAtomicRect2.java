@@ -93,6 +93,7 @@ public class IAtomicRect2 implements IRect2 {
         long stamp = lock.writeLock();
         try {
             this.start.setXY(x, y);
+            reCalcBottomCorners();
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -102,6 +103,7 @@ public class IAtomicRect2 implements IRect2 {
         long stamp = lock.writeLock();
         try {
             this.start.setXY(start.x(), start.y());
+            reCalcBottomCorners();
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -111,6 +113,7 @@ public class IAtomicRect2 implements IRect2 {
         long stamp = lock.writeLock();
         try {
             this.end.setXY(x, y);
+            reCalcBottomCorners();
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -120,15 +123,27 @@ public class IAtomicRect2 implements IRect2 {
         long stamp = lock.writeLock();
         try {
             this.end.setXY(end.x(), end.y());
+            reCalcBottomCorners();
+        } finally {
+            lock.unlockWrite(stamp);
+        }
+    }
+    public void setSize(IVector2 size) {
+        long stamp = lock.writeLock();
+        try {
+            this.size.setXY(size.x(), size.y());
+            reCalcBottomCorners();
         } finally {
             lock.unlockWrite(stamp);
         }
     }
 
+
     public void setSize(int x, int y) {
         long stamp = lock.writeLock();
         try {
             this.size.setXY(x, y);
+            reCalcBottomCorners();
         } finally {
             lock.unlockWrite(stamp);
         }

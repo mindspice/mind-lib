@@ -60,26 +60,32 @@ public class IMutRect2 implements IRect2 {
 
     public void setStart(int x, int y) {
         this.start.setXY(x, y);
+        reCalcBottomCorners();
     }
 
     public void setStart(IVector2 start) {
         this.start.setXY(start.x(), start.y());
+        reCalcBottomCorners();
     }
 
     public void setEnd(int x, int y) {
         this.end.setXY(x, y);
+        reCalcBottomCorners();
     }
 
     public void setEnd(IVector2 end) {
         this.end.setXY(end.x(), end.y());
+        reCalcBottomCorners();
     }
 
     public void setSize(int x, int y) {
         this.size.setXY(x, y);
+        reCalcBottomCorners();
     }
 
     public void setSize(IMutVector2 size) {
         this.size.setXY(size.x(), size.y());
+        reCalcBottomCorners();
     }
 
     public IMutRect2 reCenter(int x, int y) {
