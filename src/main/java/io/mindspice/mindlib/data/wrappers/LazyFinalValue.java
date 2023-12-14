@@ -20,7 +20,7 @@ public class LazyFinalValue<T> {
 
     public T get() { return value; }
 
-    public T orElseThrowIfUnset() {
+    public T getOrThrow() {
         if (!isSet) { throw new IllegalStateException("Value has not been set"); }
         return value;
     }

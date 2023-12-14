@@ -15,7 +15,7 @@ public class RunnableTriConsumer<T, U, V> implements Runnable {
         this.consumer = Objects.requireNonNull(consumer, "Consumer cannot be null");
         this.firstObj = Objects.requireNonNull(firstObj, "First object cannot be null");
         this.secondObj = Objects.requireNonNull(secondObj, "Second object cannot be null");
-        this.thirdObj = Objects.requireNonNull(thirdObj, "Second object cannot be null");
+        this.thirdObj = Objects.requireNonNull(thirdObj, "Third object cannot be null");
     }
 
     @Override
