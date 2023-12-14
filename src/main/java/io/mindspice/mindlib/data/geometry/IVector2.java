@@ -15,6 +15,8 @@ public interface IVector2 {
 
     IVector2 setXY(int x, int y);
 
+    IVector2 setXY(IVector2 other);
+
     IVector2 subtract(IVector2 other);
 
     IVector2 subtract(int x, int y);
@@ -65,6 +67,18 @@ public interface IVector2 {
 
     static IMutVector2 ofMutable(IVector2 other) {
         return new IMutVector2(other);
+    }
+
+    static IAtomicVector2 ofAtomic(int x, int y) {
+        return new IAtomicVector2(x, y);
+    }
+
+    static IAtomicVector2 ofAtomic(float x, float y) {
+        return new IAtomicVector2(x, y);
+    }
+
+    static IAtomicVector2 ofAtomic(IVector2 other) {
+        return new IAtomicVector2(other);
     }
 
 

@@ -1,32 +1,42 @@
 package io.mindspice.mindlib.data.geometry;
 
-public class IMutRec2 implements IRect2 {
+public class IMutRect2 implements IRect2 {
     private IMutVector2 start;
     private IMutVector2 end;
     private IMutVector2 size;
+    private IMutVector2 bottomLeft;
+    private IMutVector2 bottomRight;
 
-    IMutRec2(IVector2 start, IVector2 end, IVector2 size) {
+    IMutRect2(IVector2 start, IVector2 end, IVector2 size) {
         this.start = IVector2.ofMutable(start);
         this.end = IVector2.ofMutable(end);
         this.size = IVector2.ofMutable(size);
+        this.bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
+        this.bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
     }
 
-    IMutRec2(int x, int y, int width, int height) {
+    IMutRect2(int x, int y, int width, int height) {
         start = new IMutVector2(x, y);
         end = new IMutVector2(x + width, y + height);
         size = new IMutVector2(width, height);
+        bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
+        bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
     }
 
-    IMutRec2(IVector2 start, IVector2 size) {
+    IMutRect2(IVector2 start, IVector2 size) {
         this.start = new IMutVector2(start);
         end = new IMutVector2(start.x() + size.x(), start.y() + size.y());
         this.size = new IMutVector2(size);
+        bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
+        bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
     }
 
-    IMutRec2(IRect2 other) {
+    IMutRect2(IRect2 other) {
         this.start = new IMutVector2(other.start());
         this.end = new IMutVector2(other.end());
         this.size = new IMutVector2(other.size());
+        bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
+        bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
     }
 
     public IConstRect2 asIRec2() {
@@ -72,19 +82,21 @@ public class IMutRec2 implements IRect2 {
         this.size.setXY(size.x(), size.y());
     }
 
-    public IMutRec2 reCenter(int x, int y) {
+    public IMutRect2 reCenter(int x, int y) {
         start.setX(x - (size.x() / 2));
         start.setY(y - (size.y() / 2));
         end.setX(start.x() + size.x());
         end.setY(start.y() + size.y());
+        reCalcBottomCorners();
         return this;
     }
 
-    public IMutRec2 reCenter(IVector2 center) {
+    public IMutRect2 reCenter(IVector2 center) {
         start.setX(center.x() - (size.x() / 2));
         start.setY(center.y() - (size.y() / 2));
         end.setX(start.x() + size.x());
         end.setY(start.y() + size.y());
+        reCalcBottomCorners();
         return this;
     }
 
@@ -94,12 +106,12 @@ public class IMutRec2 implements IRect2 {
     }
 
     @Override
-    public boolean withinBounds(IVector2 pos) {
+    public boolean contains(IVector2 pos) {
         return pos.x() >= start.x() && pos.x() <= end.x() && pos.y() >= start.y() && pos.y() <= end.y();
     }
 
     @Override
-    public boolean withinBounds(int x, int y) {
+    public boolean contains(int x, int y) {
         return x >= start.x() && x <= end.x() && y >= start.y() && y <= end.y();
     }
 
@@ -131,8 +143,53 @@ public class IMutRec2 implements IRect2 {
         return this;
     }
 
-    public IMutRec2 combineMutable(IRect2 other) {
-        return (IMutRec2) this.combine(other);
+    public IMutRect2 combineMutable(IRect2 other) {
+        return (IMutRect2) this.combine(other);
+    }
+
+    private void reCalcBottomCorners() {
+        bottomLeft.setXY(start.x(), start.y() + size.y());
+        bottomRight.setXY(end.x(), end.y() + size.y());
+    }
+
+    @Override
+    public IVector2 topLeft() {
+        return start;
+    }
+
+    @Override
+    public IVector2 topRight() {
+        return end;
+    }
+
+    @Override
+    public IVector2 bottomLeft() {
+        return bottomLeft;
+    }
+
+    @Override
+    public IVector2 bottomRight() {
+        return bottomRight;
+    }
+
+    @Override
+    public ILine2 leftEdge() {
+        return new IConstLine2(start.x(), start.y(), start.x(), start.y() + size().y());
+    }
+
+    @Override
+    public ILine2 rightEdge() {
+        return new IConstLine2(end.x(), end.y(), end.x(), end.y() + size().y());
+    }
+
+    @Override
+    public ILine2 topEdge() {
+        return new IConstLine2(start.x(), start.y(), end.x(), end.y());
+    }
+
+    @Override
+    public ILine2 bottomEdge() {
+        return new IConstLine2(start.x(), start.y() + size().y(), end.x(), end.y() + size().y());
     }
 
     @Override

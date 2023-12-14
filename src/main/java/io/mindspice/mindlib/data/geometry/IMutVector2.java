@@ -37,10 +37,17 @@ public class IMutVector2 implements IVector2 {
         this.y = y;
     }
 
-
+    @Override
     public IMutVector2 setXY(int x, int y) {
         this.x = x;
         this.y = y;
+        return this;
+    }
+
+    @Override
+    public IMutVector2 setXY(IVector2 other) {
+        this.x = other.x();
+        this.y = other.y();
         return this;
     }
 

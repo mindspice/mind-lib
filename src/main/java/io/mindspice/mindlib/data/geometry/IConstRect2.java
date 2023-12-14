@@ -22,16 +22,16 @@ public record IConstRect2(
         );
     }
 
-    IConstRect2(IMutRec2 other) {
+    IConstRect2(IRect2 other) {
         this(
-                other.start().asImmutable(),
-                other.end().asImmutable(),
-                other.size().asImmutable()
+                IVector2.of(other.start()),
+                IVector2.of(other.end()),
+                IVector2.of(other.size())
         );
     }
 
-    public IMutRec2 asIMutRect() {
-        return new IMutRec2(this);
+    public IMutRect2 asIMutRect() {
+        return new IMutRect2(this);
     }
 
     @Override
@@ -40,12 +40,12 @@ public record IConstRect2(
     }
 
     @Override
-    public boolean withinBounds(IVector2 pos) {
+    public boolean contains(IVector2 pos) {
         return pos.x() >= start.x() && pos.x() <= end.x() && pos.y() >= start.y() && pos.y() <= end.y();
     }
 
     @Override
-    public boolean withinBounds(int x, int y) {
+    public boolean contains(int x, int y) {
         return x >= start.x() && x <= end.x() && y >= start.y() && y <= end.y();
     }
 
@@ -78,6 +78,46 @@ public record IConstRect2(
                 newEnd,
                 new IConstVector2(newEnd.x() - newStart.x(), newEnd.y() - newStart.y())
         );
+    }
+
+    @Override
+    public IVector2 topLeft() {
+        return start;
+    }
+
+    @Override
+    public IVector2 topRight() {
+        return end;
+    }
+
+    @Override
+    public IVector2 bottomLeft() {
+        return new IConstVector2(start.x(), start.y() + size().y());
+    }
+
+    @Override
+    public IVector2 bottomRight() {
+        return new IConstVector2(end.x(), end.y() + size().y());
+    }
+
+    @Override
+    public ILine2 leftEdge() {
+        return new IConstLine2(start.x(), start.y(), start.x(), start.y() + size().y());
+    }
+
+    @Override
+    public ILine2 rightEdge() {
+        return new IConstLine2(end.x(), end.y(), end.x(), end.y() + size().y());
+    }
+
+    @Override
+    public ILine2 topEdge() {
+        return new IConstLine2(start.x(), start.y(), end.x(), end.y());
+    }
+
+    @Override
+    public ILine2 bottomEdge() {
+        return new IConstLine2(start.x(), start.y() + size().y(), end.x(), end.y() + size().y());
     }
 
     @Override

@@ -42,8 +42,14 @@ public record IConstVector2(
         return new IConstVector2(this.x + other.x(), this.y + other.y());
     }
 
+    @Override
     public IVector2 setXY(int x, int y) {
         return IVector2.of(x, y);
+    }
+
+    @Override
+    public IVector2 setXY(IVector2 other) {
+        return IVector2.of(other);
     }
 
     @Override
