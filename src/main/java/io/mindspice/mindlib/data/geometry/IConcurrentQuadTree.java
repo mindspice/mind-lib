@@ -63,13 +63,17 @@ public class IConcurrentQuadTree<T> {
         }
 
         boolean insert(QuadItem<T> item) {
+
             long rStamp = -1;
             boolean contains;
             do {
                 rStamp = lock.tryOptimisticRead();
                 contains = quadrant.contains(item.position);
             } while (!lock.validate(rStamp));
-            if (!contains) { return false; }
+
+            if (!contains) {
+                return false;
+            }
 
             if (subdivided) {
                 return insertIntoSubQuad(item);
@@ -78,10 +82,10 @@ public class IConcurrentQuadTree<T> {
             long wStamp = lock.writeLock();
             try {
 
-
                 if (currCapacity < capacity) {
                     items[currCapacity] = item;
                     currCapacity++;
+                    //System.out.println("exit insert");
                     return true;
                 }
                 if (quadrant.size().x() <= 16 || quadrant.size().y() <= 16) {
@@ -101,11 +105,12 @@ public class IConcurrentQuadTree<T> {
         }
 
         boolean remove(IVector2 position, T item) {
+
             long rStamp = -1;
             boolean contains;
             do {
                 rStamp = lock.tryOptimisticRead();
-                contains = !quadrant.contains(position);
+                contains = quadrant.contains(position);
             } while (!lock.validate(rStamp));
             if (!contains) { return false; }
 
@@ -135,21 +140,21 @@ public class IConcurrentQuadTree<T> {
             boolean contains;
             do {
                 rStamp = lock.tryOptimisticRead();
-                contains = !quadrant.contains(position);
+                contains = quadrant.contains(position);
             } while (!lock.validate(rStamp));
             if (!contains) { return null; }
 
+            if (subdivided) {
+                QuadItem<T> found = tLeftInnerQuad.removeAndGet(position, item);
+                if (found != null) { return found; }
+                found = tRightInnerQuad.removeAndGet(position, item);
+                if (found != null) { return found; }
+                found = bLeftInnerQuad.removeAndGet(position, item);
+                if (found != null) { return found; }
+                return bRightInnerQuad.removeAndGet(position, item);
+            }
             long wLock = lock.writeLock();
             try {
-                if (subdivided) {
-                    QuadItem<T> found = tLeftInnerQuad.removeAndGet(position, item);
-                    if (found != null) { return found; }
-                    found = tRightInnerQuad.removeAndGet(position, item);
-                    if (found != null) { return found; }
-                    found = bLeftInnerQuad.removeAndGet(position, item);
-                    if (found != null) { return found; }
-                    return bRightInnerQuad.removeAndGet(position, item);
-                }
 
                 for (int i = 0; i < currCapacity; i++) {
                     if (items[i].position().equals(position) && items[i].item().equals(item)) {
@@ -161,9 +166,11 @@ public class IConcurrentQuadTree<T> {
                     }
                 }
                 return null;
+
             } finally {
                 lock.unlockWrite(wLock);
             }
+
         }
 
         // Write lock is already held during subdivision from the caller
@@ -192,11 +199,7 @@ public class IConcurrentQuadTree<T> {
                 QuadItem<T> item = items[i];
                 insertIntoSubQuad(item);
             }
-
-
-
         }
-
 
         private boolean insertIntoSubQuad(QuadItem<T> item) {
             long stamp = -1;
@@ -231,9 +234,10 @@ public class IConcurrentQuadTree<T> {
         }
 
         void query(IRect2 searchArea, List<QuadItem<T>> itemFound) {
-            long stamp = lock.readLock();
+            long stamp;
             boolean intersects;
             do {
+                stamp = lock.tryOptimisticRead();
                 intersects = quadrant.intersects(searchArea);
             } while (!lock.validate(stamp));
             if (!intersects) { return; }

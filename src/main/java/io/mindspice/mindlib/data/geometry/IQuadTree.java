@@ -160,11 +160,14 @@ public class IQuadTree<T> {
             // Insert the item into the appropriate sub-quadrant
             if (tLeftInnerQuad.quadrant.contains(item.position)) {
                 return tLeftInnerQuad.insert(item);
-            } else if (tRightInnerQuad.quadrant.contains(item.position)) {
+            }
+            if (tRightInnerQuad.quadrant.contains(item.position)) {
                 return tRightInnerQuad.insert(item);
-            } else if (bLeftInnerQuad.quadrant.contains(item.position)) {
+            }
+            if (bLeftInnerQuad.quadrant.contains(item.position)) {
                 return bLeftInnerQuad.insert(item);
-            } else if (bRightInnerQuad.quadrant.contains(item.position)) {
+            }
+            if (bRightInnerQuad.quadrant.contains(item.position)) {
                 return bRightInnerQuad.insert(item);
             }
 

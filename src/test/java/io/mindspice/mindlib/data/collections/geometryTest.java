@@ -6,6 +6,10 @@ import org.junit.jupiter.api.Test;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.LockSupport;
 
 
 public class geometryTest {
@@ -84,11 +88,11 @@ public class geometryTest {
     // Driver code
 
     @Test
-    void randomTest() {
-        int boundX = 1920 * 2;
-        int boundY = 1920 * 2;
+    void randomTest() throws InterruptedException {
+        int boundX = 1920 ;
+        int boundY = 1920 ;
         IRect2 bounds = IRect2.of(0, 0, boundX, boundY); // Example boundary
-        IConcurrentQuadTree<Object> quadTree = new IConcurrentQuadTree<>(bounds, 5); // 4 is the capacity per quadrant
+        IConcurrentQuadTree<Object> quadTree = new IConcurrentQuadTree<>(bounds, 4); // 4 is the capacity per quadrant
 
         // Random number generator
         Random rand = new Random();
@@ -106,9 +110,9 @@ public class geometryTest {
         int foundCount = 0;
         IMutRect2 mutRec = IRect2.ofMutable(0, 0, 960, 640);
         IMutLine2 line = ILine2.ofMutable(0, 0, 0, 0);
-        var pArr = new IVector2[8];
-        for (int i = 0; i < 8; i++) {
-            int sides = 8;
+        var pArr = new IVector2[20];
+        for (int i = 0; i < 20; i++) {
+            int sides = 20;
             double angleStep = 2 * Math.PI / sides;
             double angle = i * angleStep;
             int radius = 540;
@@ -118,28 +122,68 @@ public class geometryTest {
         }
         //  System.out.println(quadTree);
 
-        IPolygon2 poly = IPolygon2.of(pArr);
-        IMutVector2 mVec = IVector2.ofMutable(0, 0);
-        IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
-        Object obj = new Object();
-        quadTree.insert(mVec, obj);
-        int colCount = 0;
-        var t = System.nanoTime();
-        for (int i = 0; i < 100_000; ++i) {
-            mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
-            quadTree.update(lastMVec, mVec, obj);
-            lastMVec.setXY(mVec);
-//            var found = quadTree.query(mutRec.reCenter(960, 640));
-//            line.setEnd(rand.nextInt(100), rand.nextInt(100));
-//            for (var f : found) {
-//                if (poly.intersects(line)) {
-//                    colCount++;
-//                }
 
- //           }
-        }
-        System.out.println((System.nanoTime() - t) / 100_000);
-        System.out.println(foundCount);
+       ;
+
+        ExecutorService exec = Executors.newFixedThreadPool(2);
+
+
+        exec.submit(() -> {
+            IPolygon2 poly = IPolygon2.of(pArr);
+            IMutVector2 mVec = IVector2.ofMutable(0, 0);
+            IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
+            Object obj = new Object();
+            quadTree.insert(mVec, obj);
+            int colCount = 0;
+            var t = System.nanoTime();
+            for (int i = 0; i < 10000; ++i) {
+                mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
+                quadTree.update(lastMVec, mVec, obj);
+                lastMVec.setXY(mVec);
+//                var found = quadTree.query(mutRec.reCenter(960, 640));
+//                line.setEnd(rand.nextInt(100), rand.nextInt(100));
+//                for (var f : found) {
+//                    if (poly.intersects(line)) {
+//                        colCount++;
+//                    }
+//                }
+            }
+            var e = ((System.nanoTime() - t) /  1000_0);
+            System.out.println("update time:" + e);
+            System.out.println(foundCount);
+        });
+
+        exec.submit(() -> {
+            IPolygon2 poly = IPolygon2.of(pArr);
+            IMutVector2 mVec = IVector2.ofMutable(0, 0);
+            IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
+            Object obj = new Object();
+            quadTree.insert(mVec, obj);
+            int colCount = 0;
+            var t = System.nanoTime();
+            for (int i = 0; i < 10_00; ++i) {
+                LockSupport.parkNanos(105);
+//                mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
+//                quadTree.update(lastMVec, mVec, obj);
+//                lastMVec.setXY(mVec);
+                var found = quadTree.query(mutRec.reCenter(128, 128));
+                line.setEnd(rand.nextInt(100), rand.nextInt(100) );
+                for (var f : found) {
+                    if (poly.intersects(line)) {
+                        colCount++;
+                    }
+                }
+
+            }
+            var e = ((System.nanoTime() - t) /  1000_0);
+            System.out.println("collision time:" + e);
+            System.out.println(foundCount);
+        });
+
+        Thread.sleep(Integer.MAX_VALUE);
+
+
+
         //     System.out.println(quadTree);
     }
 }
