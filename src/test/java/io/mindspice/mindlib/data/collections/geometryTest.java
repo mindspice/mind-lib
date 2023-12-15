@@ -1,11 +1,11 @@
 package io.mindspice.mindlib.data.collections;
 
-import io.mindspice.mindlib.data.geometry.ILine2;
-import io.mindspice.mindlib.data.geometry.IPolygon2;
+import io.mindspice.mindlib.data.geometry.*;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
+import java.util.Random;
 
 
 public class geometry {
@@ -24,8 +24,8 @@ public class geometry {
                 .addPoint(20, 50)
                 .build();
         System.out.println(poly);
-        ILine2 line = ILine2.of(30,20,30,60);
-        ILine2 line2 = ILine2.of(40,40,20,50);
+        ILine2 line = ILine2.of(30, 20, 30, 60);
+        ILine2 line2 = ILine2.of(40, 40, 20, 50);
 
         var inst = poly.intersects(line);
         var inst2 = line2.intersects(line);
@@ -83,5 +83,53 @@ public class geometry {
 
     // Driver code
 
+    @Test
+    void randomTest() {
+        int boundX = 1920;
+        int boundY = 1920;
+        IRect2 bounds = IRect2.of(0, 0, boundX, boundY); // Example boundary
+        IQuadTree<Object> quadTree = new IQuadTree<>(bounds, 5); // 4 is the capacity per quadrant
 
+        // Random number generator
+        Random rand = new Random();
+
+        // Generate and insert 100 random objects
+        for (int i = 0; i < 100; i++) {
+            int x = rand.nextInt(boundX); // Random x-coordinate within bounds
+            int y = rand.nextInt(boundY); // Random y-coordinate within bounds
+            IVector2 position = IVector2.of(x, y);
+            Object obj = new Object();
+            quadTree.insert(position, obj);
+        }
+
+        int foundCount = 0;
+        IMutRect2 mutRec = IRect2.ofMutable(0, 0, 960, 640);
+        IMutLine2 line = ILine2.ofMutable(0, 0, 0, 0);
+        var pArr = new IVector2[8];
+        for (int i = 0; i < 8; i++) {
+            int sides = 8;
+            double angleStep = 2 * Math.PI / sides;
+            double angle = i * angleStep;
+            int radius = 540;
+            double x = 250 + radius * Math.cos(angle);
+            double y = 250 + radius * Math.sin(angle);
+            pArr[i] = IVector2.of((int) x, (int) y);
+        }
+
+        IPolygon2 poly = IPolygon2.of(pArr);
+        int colCount = 0;
+        var t = System.nanoTime();
+        for (int i = 0; i < 100_000; ++i) {
+            var found = quadTree.query(mutRec.reCenter(rand.nextInt(boundX), rand.nextInt(1920)));
+            line.setEnd(rand.nextInt(100), rand.nextInt(100));
+            for (var f : found) {
+                if (poly.intersects(line)) {
+                    colCount++;
+                }
+            }
+
+        }
+        System.out.println((System.nanoTime() - t) / 100_000);
+        System.out.println(foundCount);
+    }
 }
