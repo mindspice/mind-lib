@@ -8,7 +8,7 @@ import java.awt.geom.Line2D;
 import java.util.Random;
 
 
-public class geometry {
+public class geometryTest {
     int[] x = new int[]{20, 70, 40, 20};
     int[] y = new int[]{10, 10, 40, 50};
     Polygon p = new Polygon(x, y, 4);
@@ -85,21 +85,22 @@ public class geometry {
 
     @Test
     void randomTest() {
-        int boundX = 1920;
-        int boundY = 1920;
+        int boundX = 1920 * 2;
+        int boundY = 1920 * 2;
         IRect2 bounds = IRect2.of(0, 0, boundX, boundY); // Example boundary
-        IQuadTree<Object> quadTree = new IQuadTree<>(bounds, 5); // 4 is the capacity per quadrant
+        IConcurrentQuadTree<Object> quadTree = new IConcurrentQuadTree<>(bounds, 5); // 4 is the capacity per quadrant
 
         // Random number generator
         Random rand = new Random();
 
         // Generate and insert 100 random objects
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 350; i++) {
             int x = rand.nextInt(boundX); // Random x-coordinate within bounds
             int y = rand.nextInt(boundY); // Random y-coordinate within bounds
             IVector2 position = IVector2.of(x, y);
             Object obj = new Object();
             quadTree.insert(position, obj);
+            ;
         }
 
         int foundCount = 0;
@@ -115,21 +116,30 @@ public class geometry {
             double y = 250 + radius * Math.sin(angle);
             pArr[i] = IVector2.of((int) x, (int) y);
         }
+        //  System.out.println(quadTree);
 
         IPolygon2 poly = IPolygon2.of(pArr);
+        IMutVector2 mVec = IVector2.ofMutable(0, 0);
+        IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
+        Object obj = new Object();
+        quadTree.insert(mVec, obj);
         int colCount = 0;
         var t = System.nanoTime();
         for (int i = 0; i < 100_000; ++i) {
-            var found = quadTree.query(mutRec.reCenter(rand.nextInt(boundX), rand.nextInt(1920)));
-            line.setEnd(rand.nextInt(100), rand.nextInt(100));
-            for (var f : found) {
-                if (poly.intersects(line)) {
-                    colCount++;
-                }
-            }
+            mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
+            quadTree.update(lastMVec, mVec, obj);
+            lastMVec.setXY(mVec);
+//            var found = quadTree.query(mutRec.reCenter(960, 640));
+//            line.setEnd(rand.nextInt(100), rand.nextInt(100));
+//            for (var f : found) {
+//                if (poly.intersects(line)) {
+//                    colCount++;
+//                }
 
+ //           }
         }
         System.out.println((System.nanoTime() - t) / 100_000);
         System.out.println(foundCount);
+        //     System.out.println(quadTree);
     }
 }

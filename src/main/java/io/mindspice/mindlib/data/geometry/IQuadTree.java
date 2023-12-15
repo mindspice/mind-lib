@@ -1,6 +1,7 @@
 package io.mindspice.mindlib.data.geometry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -12,19 +13,39 @@ public class IQuadTree<T> {
     }
 
     public void insert(IVector2 position, T item) {
-        root.insert(position, item);
+
+        root.insert(new QuadItem<>(position, item));
     }
 
-    List<QuadItem<T>> query(IRect2 searchArea) {
+    public List<QuadItem<T>> query(IRect2 searchArea) {
         List<QuadItem<T>> foundItems = new ArrayList<>();
         root.query(searchArea, foundItems);
         return foundItems;
     }
 
+    public void remove(IVector2 position, T item) {
+        root.remove(position, item);
+    }
+
+    public QuadItem<T> removeAndGet(IVector2 position, T item) {
+        return root.removeAndGet(position, item);
+    }
+
+    public boolean update(IVector2 oldPosition, IVector2 newPosition, T item) {
+        QuadItem<T> found = root.removeAndGet(oldPosition, item);
+        if (found == null) {
+            return false;
+        } else {
+            found.updatePosition(newPosition);
+            root.insert(found);
+            return true;
+        }
+    }
+
     private class Node {
         private final IRect2 quadrant;
-        private final QuadItem<T>[] items;
-        private final int capacity;
+        private QuadItem<T>[] items;
+        private int capacity;
         private int currCapacity = 0;
         private Node tLeftInnerQuad;
         private Node tRightInnerQuad;
@@ -39,32 +60,29 @@ public class IQuadTree<T> {
             items = (QuadItem<T>[]) new QuadItem[capacity];
         }
 
-        boolean insert(IVector2 position, T item) {
-            if (!quadrant.contains(position)) {
+        boolean insert(QuadItem<T> item) {
+            if (!quadrant.contains(item.position)) {
                 return false;
             }
 
             if (subdivided) {
-                if (tLeftInnerQuad.insert(position, item) || tRightInnerQuad.insert(position, item)
-                        || bLeftInnerQuad.insert(position, item) || bRightInnerQuad.insert(position, item)) {
-                    return true;
-                }
+                return insertIntoSubQuad(item);
             }
 
             if (currCapacity < capacity) {
-                items[currCapacity] = new QuadItem<>(position, item);
+                items[currCapacity] = item;
                 currCapacity++;
                 return true;
             }
-
-            if (!subdivided) {
-                subdivide();
-                return insert(position, item);
+            if (quadrant.size().x() <= 16 || quadrant.size().y() <= 16) {
+                capacity = capacity * 2;
+                items = Arrays.copyOf(items, capacity);
+                items[currCapacity] = item;
+                currCapacity++;
+                return true;
             }
-
-            return (tLeftInnerQuad.insert(position, item) || tRightInnerQuad.insert(position, item)
-                    || bLeftInnerQuad.insert(position, item) || bRightInnerQuad.insert(position, item));
-
+            subdivide();
+            return insertIntoSubQuad(item);
         }
 
         boolean remove(IVector2 position, T item) {
@@ -72,60 +90,167 @@ public class IQuadTree<T> {
                 return false;
             }
 
+            if (subdivided) {
+                return (tLeftInnerQuad.remove(position, item) || tRightInnerQuad.remove(position, item)
+                        || bLeftInnerQuad.remove(position, item) || bRightInnerQuad.remove(position, item));
+            }
+
             for (int i = 0; i < currCapacity; i++) {
                 if (items[i].position().equals(position) && items[i].item().equals(item)) {
-                    // Move the elements to fill the gap
-                    if (currCapacity - 1 - i > 0) {
-                        System.arraycopy(items, i + 1, items, i, currCapacity - 1 - i);
-                    }
-
+                    System.arraycopy(items, i + 1, items, i, currCapacity - i - 1);
                     currCapacity--;
                     items[currCapacity] = null;
                     return true;
                 }
             }
-
-            if (subdivided) {
-                // Attempt to remove from a subdivided node
-                return (tLeftInnerQuad.remove(position, item) || tRightInnerQuad.remove(position, item)
-                        || bLeftInnerQuad.remove(position, item) || bRightInnerQuad.remove(position, item));
-            }
-
             return false;
         }
 
-        void subdivide() {
-            int x = quadrant.getCenter().x();
-            int y = quadrant.getCenter().y();
-            int w = quadrant.size().x() / 2;
-            int h = quadrant.size().y() / 2;
+        QuadItem<T> removeAndGet(IVector2 position, T item) {
+            if (!quadrant.contains(position)) {
+                return null;
+            }
 
-            tLeftInnerQuad = new Node(IRect2.of(x - w / 2, y - h / 2, w, h), capacity);
-            tRightInnerQuad = new Node(IRect2.of(x + w / 2, y - h / 2, w, h), capacity);
-            bLeftInnerQuad = new Node(IRect2.of(x - w / 2, y + h / 2, w, h), capacity);
-            bRightInnerQuad = new Node(IRect2.of(x + w / 2, y + h / 2, w, h), capacity);
+            if (subdivided) {
+                QuadItem<T> found = tLeftInnerQuad.removeAndGet(position, item);
+                if (found != null) { return found; }
+                found = tRightInnerQuad.removeAndGet(position, item);
+                if (found != null) { return found; }
+                found = bLeftInnerQuad.removeAndGet(position, item);
+                if (found != null) { return found; }
+                return bRightInnerQuad.removeAndGet(position, item);
+            }
+
+            for (int i = 0; i < currCapacity; i++) {
+                if (items[i].position().equals(position) && items[i].item().equals(item)) {
+                    QuadItem<T> tempItem = items[i];
+                    System.arraycopy(items, i + 1, items, i, currCapacity - i - 1);
+                    currCapacity--;
+                    items[currCapacity] = null;
+                    return tempItem;
+                }
+            }
+            return null;
+        }
+
+        void subdivide() {
+            int centerX = quadrant.getCenter().x();
+            int centerY = quadrant.getCenter().y();
+            int halfWidth = quadrant.size().x() / 2;
+            int halfHeight = quadrant.size().y() / 2;
+
+            tLeftInnerQuad = new Node(
+                    IRect2.of(centerX - halfWidth, centerY - halfHeight, halfWidth, halfHeight), capacity
+            );
+            tRightInnerQuad = new Node(IRect2.of(centerX, centerY - halfHeight, halfWidth, halfHeight), capacity);
+            bLeftInnerQuad = new Node(IRect2.of(centerX - halfWidth, centerY, halfWidth, halfHeight), capacity);
+            bRightInnerQuad = new Node(IRect2.of(centerX, centerY, halfWidth, halfHeight), capacity);
+
+            for (int i = 0; i < currCapacity; i++) {
+                QuadItem<T> item = items[i];
+                insertIntoSubQuad(item);
+            }
+
+            items = null; // Clear items in current node after redistribution
+            currCapacity = 0;
             subdivided = true;
+        }
+
+        private boolean insertIntoSubQuad(QuadItem<T> item) {
+            // Insert the item into the appropriate sub-quadrant
+            if (tLeftInnerQuad.quadrant.contains(item.position)) {
+                return tLeftInnerQuad.insert(item);
+            } else if (tRightInnerQuad.quadrant.contains(item.position)) {
+                return tRightInnerQuad.insert(item);
+            } else if (bLeftInnerQuad.quadrant.contains(item.position)) {
+                return bLeftInnerQuad.insert(item);
+            } else if (bRightInnerQuad.quadrant.contains(item.position)) {
+                return bRightInnerQuad.insert(item);
+            }
+
+            throw new IllegalStateException("Insertion Failed. Position:" + item.position + "\nQuadrants:\n "
+                    + tLeftInnerQuad + tRightInnerQuad + bLeftInnerQuad + bRightInnerQuad);
+
         }
 
         void query(IRect2 searchArea, List<QuadItem<T>> itemFound) {
             if (!quadrant.intersects(searchArea)) { return; }
 
-            for (int i = 0; i < currCapacity; ++i) {
-                if (searchArea.contains(items[i].position())) {
-                    itemFound.add(items[i]);
-                }
-            }
             if (subdivided) {
                 tLeftInnerQuad.query(searchArea, itemFound);
                 tRightInnerQuad.query(searchArea, itemFound);
                 bLeftInnerQuad.query(searchArea, itemFound);
                 bRightInnerQuad.query(searchArea, itemFound);
             }
+
+            for (int i = 0; i < currCapacity; ++i) {
+                if (searchArea.contains(items[i].position())) {
+                    itemFound.add(items[i]);
+                }
+            }
+
         }
+
+        @Override
+        public String toString() {
+            return toStringHelper("");
+        }
+
+        private String toStringHelper(String indent) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(indent).append("Node: ").append(quadrant).append("\n");
+
+            if (items != null) {
+                for (int i = 0; i < currCapacity; i++) {
+                    sb.append(indent).append(" - Item: ").append(items[i]).append("\n");
+                }
+            }
+
+            if (subdivided) {
+                String newIndent = indent + "  ";
+                sb.append(tLeftInnerQuad.toStringHelper(newIndent));
+                sb.append(tRightInnerQuad.toStringHelper(newIndent));
+                sb.append(bLeftInnerQuad.toStringHelper(newIndent));
+                sb.append(bRightInnerQuad.toStringHelper(newIndent));
+            }
+
+            return sb.toString();
+        }
+
     }
 
+    @Override
+    public String toString() {
+        return root.toString();
+    }
 
-    private record QuadItem<T>(IVector2 position, T item) { }
+    // public record QuadItem<T>(IVector2 position, T item) { }
+    public static class QuadItem<T> {
+        private final IMutVector2 position;
+        private final T item;
+
+        public QuadItem(IVector2 position, T item) {
+            this.position = IVector2.ofMutable(position);
+            this.item = item;
+        }
+
+        public IVector2 position() {
+            return position;
+        }
+
+        public T item() {
+            return item;
+        }
+
+        public void updatePosition(IVector2 pos) {
+            this.position.setXY(pos);
+        }
+
+        @Override
+        public String toString() {
+            return "Position: " + position + ", Item: " + item;
+        }
+    }
 
 
 }
