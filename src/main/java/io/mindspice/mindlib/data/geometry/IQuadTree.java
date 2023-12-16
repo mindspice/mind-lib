@@ -2,6 +2,7 @@ package io.mindspice.mindlib.data.geometry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -9,12 +10,11 @@ public class IQuadTree<T> {
     private final Node root;
 
     public IQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
-        this.root = new Node(outerQuadrant, maxPerQuadrant);
+        this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
     public void insert(IVector2 position, T item) {
-
-        root.insert(new QuadItem<>(position, item));
+        root.insert(new QuadItem<>(IVector2.ofMutable(position), item));
     }
 
     public List<QuadItem<T>> query(IRect2 searchArea) {
@@ -32,14 +32,11 @@ public class IQuadTree<T> {
     }
 
     public boolean update(IVector2 oldPosition, IVector2 newPosition, T item) {
-        QuadItem<T> found = root.removeAndGet(oldPosition, item);
-        if (found == null) {
-            return false;
-        } else {
-            found.updatePosition(newPosition);
-            root.insert(found);
-            return true;
-        }
+        return root.update(oldPosition, newPosition, item);
+    }
+
+    public void deFragment() {
+        root.deFrag();
     }
 
     private class Node {
@@ -52,12 +49,15 @@ public class IQuadTree<T> {
         private Node bLeftInnerQuad;
         private Node bRightInnerQuad;
         private boolean subdivided;
+        private final Node parent;
 
         @SuppressWarnings("unchecked")
-        public Node(IRect2 quadrant, int capacity) {
+        public Node(IRect2 quadrant, int capacity, Node parent) {
             this.quadrant = quadrant;
             this.capacity = capacity;
+            this.parent = parent;
             items = (QuadItem<T>[]) new QuadItem[capacity];
+
         }
 
         boolean insert(QuadItem<T> item) {
@@ -74,8 +74,9 @@ public class IQuadTree<T> {
                 currCapacity++;
                 return true;
             }
+
             if (quadrant.size().x() <= 16 || quadrant.size().y() <= 16) {
-                capacity = capacity * 2;
+                capacity = (int) (capacity * 1.5);
                 items = Arrays.copyOf(items, capacity);
                 items[currCapacity] = item;
                 currCapacity++;
@@ -85,14 +86,56 @@ public class IQuadTree<T> {
             return insertIntoSubQuad(item);
         }
 
-        boolean remove(IVector2 position, T item) {
+        public boolean update(IVector2 position, IVector2 newPosition, T item) {
             if (!quadrant.contains(position)) {
                 return false;
             }
 
             if (subdivided) {
-                return (tLeftInnerQuad.remove(position, item) || tRightInnerQuad.remove(position, item)
-                        || bLeftInnerQuad.remove(position, item) || bRightInnerQuad.remove(position, item));
+                return tLeftInnerQuad.update(position, newPosition, item)
+                        || tRightInnerQuad.update(position, newPosition, item)
+                        || bLeftInnerQuad.update(position, newPosition, item)
+                        || bRightInnerQuad.update(position, newPosition, item);
+            }
+
+            for (int i = 0; i < currCapacity; i++) {
+                if (items[i].position().equals(position) && items[i].item().equals(item)) {
+                    QuadItem<T> foundItem = items[i];
+                    foundItem.position.setXY(newPosition);
+                    if (quadrant.contains(newPosition)) {
+                        return true;
+                    }
+                    System.arraycopy(items, i + 1, items, i, currCapacity - i - 1);
+                    currCapacity--;
+                    items[currCapacity] = null;
+
+                    return backInsert(this, foundItem);
+                }
+            }
+            return false;
+        }
+
+        public boolean backInsert(Node node, QuadItem<T> item) {
+            boolean success = node.insert(item);
+            if (success) {
+                return true;
+            }
+            if (node.parent == null) {
+                return insert(item);
+            }
+            return backInsert(node.parent, item);
+        }
+
+        public boolean remove(IVector2 position, T item) {
+            if (!quadrant.contains(position)) {
+                return false;
+            }
+
+            if (subdivided) {
+                return (tLeftInnerQuad.remove(position, item)
+                        || tRightInnerQuad.remove(position, item)
+                        || bLeftInnerQuad.remove(position, item)
+                        || bRightInnerQuad.remove(position, item));
             }
 
             for (int i = 0; i < currCapacity; i++) {
@@ -134,24 +177,31 @@ public class IQuadTree<T> {
         }
 
         void subdivide() {
+
             int centerX = quadrant.getCenter().x();
             int centerY = quadrant.getCenter().y();
             int halfWidth = quadrant.size().x() / 2;
             int halfHeight = quadrant.size().y() / 2;
 
             tLeftInnerQuad = new Node(
-                    IRect2.of(centerX - halfWidth, centerY - halfHeight, halfWidth, halfHeight), capacity
+                    IRect2.of(centerX - halfWidth, centerY - halfHeight, halfWidth, halfHeight), capacity, this
             );
-            tRightInnerQuad = new Node(IRect2.of(centerX, centerY - halfHeight, halfWidth, halfHeight), capacity);
-            bLeftInnerQuad = new Node(IRect2.of(centerX - halfWidth, centerY, halfWidth, halfHeight), capacity);
-            bRightInnerQuad = new Node(IRect2.of(centerX, centerY, halfWidth, halfHeight), capacity);
+            tRightInnerQuad = new Node(
+                    IRect2.of(centerX, centerY - halfHeight, halfWidth, halfHeight), capacity, this
+            );
+            bLeftInnerQuad = new Node(
+                    IRect2.of(centerX - halfWidth, centerY, halfWidth, halfHeight), capacity, this
+            );
+            bRightInnerQuad = new Node(
+                    IRect2.of(centerX, centerY, halfWidth, halfHeight), capacity, this
+            );
 
             for (int i = 0; i < currCapacity; i++) {
                 QuadItem<T> item = items[i];
                 insertIntoSubQuad(item);
             }
 
-            items = null; // Clear items in current node after redistribution
+            items = null;
             currCapacity = 0;
             subdivided = true;
         }
@@ -177,7 +227,9 @@ public class IQuadTree<T> {
         }
 
         void query(IRect2 searchArea, List<QuadItem<T>> itemFound) {
-            if (!quadrant.intersects(searchArea)) { return; }
+            if (!quadrant.intersects(searchArea)) {
+                return;
+            }
 
             if (subdivided) {
                 tLeftInnerQuad.query(searchArea, itemFound);
@@ -191,7 +243,48 @@ public class IQuadTree<T> {
                     itemFound.add(items[i]);
                 }
             }
+        }
 
+        private void deFrag() {
+            if (subdivided) {
+                tLeftInnerQuad.deFrag();
+                tRightInnerQuad.deFrag();
+                bLeftInnerQuad.deFrag();
+                bRightInnerQuad.deFrag();
+
+                if (areAllChildrenEmpty()) {
+                    mergeChildren();
+                }
+            } else {
+                sortItems();
+                unSize();
+            }
+        }
+
+        private void sortItems() {
+            if (items == null) { return; }
+            Arrays.sort(items, 0, currCapacity, Comparator.comparingInt(o -> o.position().x()));
+        }
+
+        private void unSize() {
+            if (capacity > root.capacity && currCapacity < (int) (root.capacity * 0.7)) {
+                items = Arrays.copyOf(items, root.capacity);
+                capacity = root.capacity;
+            }
+        }
+
+        private boolean areAllChildrenEmpty() {
+            return tLeftInnerQuad.isEmpty() && tRightInnerQuad.isEmpty() &&
+                    bLeftInnerQuad.isEmpty() && bRightInnerQuad.isEmpty();
+        }
+
+        private void mergeChildren() {
+            tLeftInnerQuad = tRightInnerQuad = bLeftInnerQuad = bRightInnerQuad = null;
+            subdivided = false;
+        }
+
+        private boolean isEmpty() {
+            return !subdivided && currCapacity == 0;
         }
 
         @Override
@@ -227,33 +320,10 @@ public class IQuadTree<T> {
         return root.toString();
     }
 
-    // public record QuadItem<T>(IVector2 position, T item) { }
-    public static class QuadItem<T> {
-        private final IMutVector2 position;
-        private final T item;
-
-        public QuadItem(IVector2 position, T item) {
-            this.position = IVector2.ofMutable(position);
-            this.item = item;
-        }
-
-        public IVector2 position() {
-            return position;
-        }
-
-        public T item() {
-            return item;
-        }
-
-        public void updatePosition(IVector2 pos) {
-            this.position.setXY(pos);
-        }
-
+    public record QuadItem<T>(IMutVector2 position, T item) {
         @Override
         public String toString() {
             return "Position: " + position + ", Item: " + item;
         }
     }
-
-
 }

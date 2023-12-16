@@ -1,14 +1,18 @@
 package io.mindspice.mindlib.data.collections;
 
 import io.mindspice.mindlib.data.geometry.*;
+import io.mindspice.mindlib.util.Utils;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.Random;
+import java.util.Vector;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.LockSupport;
 
 
@@ -88,28 +92,108 @@ public class geometryTest {
     // Driver code
 
     @Test
-    void randomTest() throws InterruptedException {
-        int boundX = 1920 ;
-        int boundY = 1920 ;
-        IRect2 bounds = IRect2.of(0, 0, boundX, boundY); // Example boundary
-        IConcurrentQuadTree<Object> quadTree = new IConcurrentQuadTree<>(bounds, 4); // 4 is the capacity per quadrant
+    void rectTest() {
+        var rect = IRect2.of(IVector2.of(100, 200), IVector2.of(300, 300));
+        assert (rect.start().x() == 100);
+        assert (rect.start().y() == 200);
+        assert (rect.end().x() == 400);
+        assert (rect.end().y() == 500);
 
+        var rect2 = IRect2.of(IVector2.of(0, 0), IVector2.of(200, 200));
+
+        for (int x = 0; x < 202; ++x) {
+            for (int y = 0; y < 202; ++y) {
+                if (x < 201 && y < 201) {
+                    assert (rect2.contains(IVector2.of(x, y)));
+                } else {
+                    assert (!rect2.contains(IVector2.of(x, y)));
+                }
+            }
+        }
+
+        for (int x = 0; x < 202; x++) {
+            for (int y = 0; y < 202; y++) {
+                if (x < 201 && y < 201) {
+                    assert (rect2.intersects(IRect2.of(IVector2.of(x, y), IVector2.of(x + 10, y + 10))));
+                } else {
+                    assert (!rect2.intersects(IRect2.of(IVector2.of(x, y), IVector2.of(x + 10, y + 10))));
+
+                }
+            }
+        }
+    }
+
+
+    @Test
+    void quadMapTest() {
+        int boundX = 1920;
+        int boundY = 1920;
+        IRect2 bounds = IRect2.of(0, 0, boundX, boundY);
+        IQuadTree<Object> quadTree = new IQuadTree<>(bounds, 4); // 4 is the capacity per quadrant
+        for (int i = 0; i < 100; i++) {
+            int x = ThreadLocalRandom.current().nextInt(boundX); // Random x-coordinate within bounds
+            int y = ThreadLocalRandom.current().nextInt(boundY); // Random y-coordinate within bounds
+            IVector2 position = IVector2.of(x, y);
+            Object obj = new Object();
+            quadTree.insert(position, obj);
+        }
+        var tVec = IVector2.of(500,500);
+        Object obj = new Object();
+        System.out.println(obj);
+        quadTree.insert(tVec, obj);
+        System.out.println(quadTree);
+        System.out.println("\n\n");
+        quadTree.update(tVec, IVector2.of(510, 510), obj);
+        System.out.println(quadTree);
+        System.out.println("\n\n");
+        quadTree.update(IVector2.of(510, 510), IVector2.of(900, 900), obj);
+        System.out.println("\n\n");
+        System.out.println(quadTree);
+        quadTree.update(IVector2.of(900, 900), IVector2.of( 1900, 1900), obj);
+        System.out.println("\n\n");
+        System.out.println(quadTree);
+
+
+    }
+
+    @Test
+    void randomTest() throws InterruptedException {
+        int boundX = 1920 * 2;
+        int boundY = 1920 * 2;
+        IRect2 bounds = IRect2.of(0, 0, boundX, boundY);
+        IConcurrentQuadTree<Object> quadTree = new IConcurrentQuadTree<>(bounds, 6); // 4 is the capacity per quadrant
+        SpatialGrid<Object> spacMap = new SpatialGrid<>(3840, 3840, 3840 / 64, 3840 / 64);
         // Random number generator
         Random rand = new Random();
 
         // Generate and insert 100 random objects
-        for (int i = 0; i < 350; i++) {
+        for (int i = 0; i < 800; i++) {
             int x = rand.nextInt(boundX); // Random x-coordinate within bounds
             int y = rand.nextInt(boundY); // Random y-coordinate within bounds
             IVector2 position = IVector2.of(x, y);
             Object obj = new Object();
             quadTree.insert(position, obj);
-            ;
+            //spacMap.insert(position, obj);
         }
 
         int foundCount = 0;
-        IMutRect2 mutRec = IRect2.ofMutable(0, 0, 960, 640);
+        IMutRect2 mutRec = IRect2.ofMutable(0, 0, 1200, 900);
         IMutLine2 line = ILine2.ofMutable(0, 0, 0, 0);
+        IMutVector2 mmm = IVector2.ofMutable(0, 0);
+        var tt = System.nanoTime();
+        int conts = 0;
+        for (int i = 0; i < 100_000; ++i) {
+            for (int j = 0; j < 400; ++j) {
+               // mutRec.reCenter(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920));
+               // mmm.setXY(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920));
+                if (mutRec.contains(mmm)) {
+                    conts++;
+                }
+            }
+        }
+        System.out.println("Contains time:" + (System.nanoTime() - tt) / 100_000);
+        System.out.println(conts);
+
         var pArr = new IVector2[20];
         for (int i = 0; i < 20; i++) {
             int sides = 20;
@@ -122,11 +206,9 @@ public class geometryTest {
         }
         //  System.out.println(quadTree);
 
+        ;
 
-       ;
-
-        ExecutorService exec = Executors.newFixedThreadPool(2);
-
+        ExecutorService exec = Executors.newFixedThreadPool(4);
 
         exec.submit(() -> {
             IPolygon2 poly = IPolygon2.of(pArr);
@@ -136,8 +218,9 @@ public class geometryTest {
             quadTree.insert(mVec, obj);
             int colCount = 0;
             var t = System.nanoTime();
-            for (int i = 0; i < 10000; ++i) {
+            for (int i = 0; i < 1000000; ++i) {
                 mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
+                LockSupport.parkNanos(1000);
                 quadTree.update(lastMVec, mVec, obj);
                 lastMVec.setXY(mVec);
 //                var found = quadTree.query(mutRec.reCenter(960, 640));
@@ -148,41 +231,128 @@ public class geometryTest {
 //                    }
 //                }
             }
-            var e = ((System.nanoTime() - t) /  1000_0);
-            System.out.println("update time:" + e);
-            System.out.println(foundCount);
+//            var e = ((System.nanoTime() - t) /  1000_0);
+//            System.out.println("update time:" + e);
+//            System.out.println(foundCount);
         });
 
         exec.submit(() -> {
             IPolygon2 poly = IPolygon2.of(pArr);
             IMutVector2 mVec = IVector2.ofMutable(0, 0);
             IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
+            var nVec = IVector2.of(1100, 800);
             Object obj = new Object();
-            quadTree.insert(mVec, obj);
+            quadTree.insert(IVector2.of(100, 789), obj);
+            quadTree.insert(IVector2.of(300, 1877), obj);
+            quadTree.insert(IVector2.of(700, 200), obj);
+            quadTree.insert(IVector2.of(1000, 200), obj);
+            quadTree.insert(IVector2.of(1200, 1589), obj);
+            quadTree.insert(IVector2.of(1600, 300), obj);
+            quadTree.insert(IVector2.of(1900, 900), obj);
             int colCount = 0;
             var t = System.nanoTime();
-            for (int i = 0; i < 10_00; ++i) {
-                LockSupport.parkNanos(105);
+            for (int i = 0; i < 10_000; ++i) {
+//                quadTree.insert(IVector2.of(1600, 300), obj);
+//                quadTree.insert(IVector2.of(1900, 900), obj);
+//              //  quadTree.remove(IVector2.of(1600, 300), obj);
+//                quadTree.remove(IVector2.of(1900, 900), obj);
+//               // mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
+//                quadTree.update(lastMVec, mVec, obj);
+//                lastMVec.setXY(mVec);
+                var found = quadTree.query(mutRec);
+                // quadTree.deFragment();
+//                line.setEnd(rand.nextInt(x1 + 10), rand.nextInt(x1 + 2));
+//                for (var f : found) {
+//                    if (poly.intersects(line)) {
+//                        colCount++;
+//                    }
+//                }
+                colCount += found.size();
+
+            }
+            var e = ((System.nanoTime() - t) / 10_000);
+            System.out.println("collision time:" + e);
+            System.out.println(colCount);
+        });
+
+        exec.submit(() -> {
+            IPolygon2 poly = IPolygon2.of(pArr);
+            IMutVector2 mVec = IVector2.ofMutable(0, 0);
+            IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
+            var nVec = IVector2.of(123, 1023);
+            Object obj = new Object();
+            spacMap.insert(IVector2.of(100, 789), obj);
+            spacMap.insert(IVector2.of(300, 1877), obj);
+            spacMap.insert(IVector2.of(700, 200), obj);
+            spacMap.insert(IVector2.of(1000, 200), obj);
+            spacMap.insert(IVector2.of(1200, 1589), obj);
+            spacMap.insert(IVector2.of(1600, 300), obj);
+            spacMap.insert(IVector2.of(1900, 900), obj);
+            int colCount = 0;
+            var t = System.nanoTime();
+            for (int i = 0; i < 10_000; ++i) {
+                spacMap.insert(IVector2.of(1600, 300), obj);
+                spacMap.insert(IVector2.of(1900, 900), obj);
+//                spacMap.remove(IVector2.of(1600, 300), obj);
+//                spacMap.remove(IVector2.of(1900, 900), obj);
 //                mVec.setXY(rand.nextInt(1900), rand.nextInt(1900));
 //                quadTree.update(lastMVec, mVec, obj);
 //                lastMVec.setXY(mVec);
-                var found = quadTree.query(mutRec.reCenter(128, 128));
-                line.setEnd(rand.nextInt(100), rand.nextInt(100) );
-                for (var f : found) {
-                    if (poly.intersects(line)) {
-                        colCount++;
+                var found = spacMap.query(mutRec.reCenter(nVec));
+//                line.setEnd(rand.nextInt(x1 + 10), rand.nextInt(x1 + 2));
+//                for (var f : found) {
+//                    if (poly.intersects(line)) {
+//                        colCount++;
+//                    }
+//                }
+                colCount += found.size();
+
+            }
+            var e = ((System.nanoTime() - t) / 10_000);
+            System.out.println("space collision time:" + e);
+            System.out.println(colCount);
+        });
+
+        record BoxTest(boolean hasCollision) { }
+
+        exec.submit(() -> {
+            IPolygon2 poly = IPolygon2.of(pArr);
+            IMutVector2 mVec = IVector2.ofMutable(0, 0);
+            IMutVector2 lastMVec = IVector2.ofMutable(0, 0);
+            var nVec = IVector2.of(123, 1023);
+            Object obj = new Object();
+            BoxTest[][] bArr = new BoxTest[1920 / 32][1920 / 32];
+            for (int x = 0; x < 1920 / 32; ++x) {
+                for (int y = 0; y < 1920 / 32; ++y) {
+                    bArr[x][y] = new BoxTest(ThreadLocalRandom.current().nextBoolean());
+                }
+            }
+            int colCount = 0;
+            var t = System.nanoTime();
+            for (int j = 0; j < 10_000; j++) {
+                mutRec.reCenter(rand.nextInt(1920), rand.nextInt(1920));
+                var c = 0;
+                for (int x = 0; x <= mutRec.size().x() / 32; x++) {
+                    for (int y = 0; y <= mutRec.size().y() / 32; ++y) {
+                        if (bArr[x][y].hasCollision) {
+                            colCount++;
+
+                        }
+                    }
+                }
+                for (int x = 0; x <= mutRec.size().x() / 32; x++) {
+                    for (int y = 0; y <= mutRec.size().y() / 32; ++y) {
+                        bArr[x][y] = bArr[y][x];
                     }
                 }
 
             }
-            var e = ((System.nanoTime() - t) /  1000_0);
-            System.out.println("collision time:" + e);
-            System.out.println(foundCount);
+            var e = ((System.nanoTime() - t) / 10_000);
+            System.out.println("rawGrid collision time:" + e);
+            System.out.println(colCount);
         });
 
         Thread.sleep(Integer.MAX_VALUE);
-
-
 
         //     System.out.println(quadTree);
     }

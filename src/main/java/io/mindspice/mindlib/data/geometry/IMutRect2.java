@@ -5,38 +5,38 @@ public class IMutRect2 implements IRect2 {
     private IMutVector2 end;
     private IMutVector2 size;
     private IMutVector2 bottomLeft;
-    private IMutVector2 bottomRight;
+    private IMutVector2 topRight;
 
     IMutRect2(IVector2 start, IVector2 end, IVector2 size) {
         this.start = IVector2.ofMutable(start);
         this.end = IVector2.ofMutable(end);
         this.size = IVector2.ofMutable(size);
-        this.bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
-        this.bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     IMutRect2(int x, int y, int width, int height) {
         start = new IMutVector2(x, y);
         end = new IMutVector2(x + width, y + height);
         size = new IMutVector2(width, height);
-        bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
-        bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     IMutRect2(IVector2 start, IVector2 size) {
         this.start = new IMutVector2(start);
         end = new IMutVector2(start.x() + size.x(), start.y() + size.y());
         this.size = new IMutVector2(size);
-        bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
-        bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     IMutRect2(IRect2 other) {
         this.start = new IMutVector2(other.start());
         this.end = new IMutVector2(other.end());
         this.size = new IMutVector2(other.size());
-        bottomLeft = IVector2.ofMutable(start.x(), start.y() + size.y());
-        bottomRight = IVector2.ofMutable(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     public IConstRect2 asIRec2() {
@@ -154,8 +154,8 @@ public class IMutRect2 implements IRect2 {
     }
 
     private void reCalcBottomCorners() {
+        topRight.setXY(start.x() + size.x(), start.y());
         bottomLeft.setXY(start.x(), start.y() + size.y());
-        bottomRight.setXY(end.x(), end.y() + size.y());
     }
 
     @Override
@@ -165,7 +165,7 @@ public class IMutRect2 implements IRect2 {
 
     @Override
     public IVector2 topRight() {
-        return end;
+        return topRight;
     }
 
     @Override
@@ -175,27 +175,26 @@ public class IMutRect2 implements IRect2 {
 
     @Override
     public IVector2 bottomRight() {
-        return bottomRight;
+        return end;
     }
 
     @Override
-    public ILine2 leftEdge() {
-        return new IConstLine2(start.x(), start.y(), start.x(), start.y() + size().y());
+    public IMutLine2 leftEdge() {
+        return new IMutLine2(start.x(), start.y(), start.x(), start.y() + size().y());
     }
 
     @Override
-    public ILine2 rightEdge() {
-        return new IConstLine2(end.x(), end.y(), end.x(), end.y() + size().y());
+    public IMutLine2 rightEdge() {
+        return new IMutLine2(end.x(), start.y(), end.x(), start.y() + size().y());
     }
 
     @Override
-    public ILine2 topEdge() {
-        return new IConstLine2(start.x(), start.y(), end.x(), end.y());
+    public IMutLine2 topEdge() {
+        return new IMutLine2(start.x(), start.y(), end.x(), start.y());
     }
-
     @Override
-    public ILine2 bottomEdge() {
-        return new IConstLine2(start.x(), start.y() + size().y(), end.x(), end.y() + size().y());
+    public IMutLine2 bottomEdge() {
+        return new IMutLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());
     }
 
     @Override

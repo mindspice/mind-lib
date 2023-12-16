@@ -5,7 +5,6 @@ import io.mindspice.mindlib.data.tuples.Pair;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 
 public class FuncUtils {
@@ -98,4 +97,6 @@ public class FuncUtils {
         }
     }
 
+    public static class UtilityFunc {
+    }
 }

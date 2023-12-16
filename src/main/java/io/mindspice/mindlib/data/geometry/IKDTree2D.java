@@ -3,10 +3,12 @@ package io.mindspice.mindlib.data.geometry;
 import java.util.ArrayList;
 import java.util.List;
 
-public class KDTree2D<T> {
+
+// WIP
+public class IKDTree2D<T> {
     private KDNode<T> root;
 
-    public KDTree2D(IRect2 outerBounds) {
+    public IKDTree2D(IRect2 outerBounds) {
         this.root = new KDNode<>(outerBounds, 0);
     }
 
@@ -51,16 +53,16 @@ public class KDTree2D<T> {
             if (isLessThan(newItem.position, item.position, level)) {
                 if (leftChild == null) {
                     IRect2 newBounds = (level % 2 == 0)
-                            ? new IRect2(bounds.start(), new IVector2(item.position.x(), bounds.end().y()))
-                            : new IRect2(bounds.start(), new IVector2(bounds.end().x(), item.position.y()));
+                            ? IRect2.of(bounds.start(), IVector2.of(item.position.x(), bounds.end().y()))
+                            : IRect2.of(bounds.start(), IVector2.of(bounds.end().x(), item.position.y()));
                     leftChild = new KDNode<>(newBounds, (level + 1) % 2);
                 }
                 leftChild.insert(newItem);
             } else {
                 if (rightChild == null) {
                     IRect2 newBounds = (level % 2 == 0)
-                            ? new IRect2(new IVector2(item.position.x(), bounds.start().y()), bounds.end())
-                            : new IRect2(new IVector2(bounds.start().x(), item.position.y()), bounds.end());
+                            ?  IRect2.of( IVector2.of(item.position.x(), bounds.start().y()), bounds.end())
+                            :  IRect2.of( IVector2.of(bounds.start().x(), item.position.y()), bounds.end());
                     rightChild = new KDNode<>(newBounds, (level + 1) % 2);
                 }
                 rightChild.insert(newItem);
@@ -72,7 +74,6 @@ public class KDTree2D<T> {
                 foundItems.add(item);
             }
 
-            // Check if search area intersects the bounding boxes of children
             if (leftChild != null && searchArea.intersects(leftChild.bounds)) {
                 leftChild.query(searchArea, foundItems);
             }
@@ -86,21 +87,7 @@ public class KDTree2D<T> {
         }
     }
 
-    public static class KDItem<T> {
-        private final IVector2 position;
-        private final T item;
 
-        public KDItem(IVector2 position, T item) {
-            this.position = position;
-            this.item = item;
-        }
-
-        public IVector2 position() {
-            return position;
-        }
-
-        public T item() {
-            return item;
-        }
+    public record KDItem<T>(IVector2 position, T item) {
     }
 }

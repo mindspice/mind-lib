@@ -7,40 +7,40 @@ public class IAtomicRect2 implements IRect2 {
     private IMutVector2 start;
     private IMutVector2 end;
     private IMutVector2 size;
+    private IMutVector2 topRight;
     private IMutVector2 bottomLeft;
-    private IMutVector2 bottomRight;
     private final StampedLock lock = new StampedLock();
 
     IAtomicRect2(IVector2 start, IVector2 end, IVector2 size) {
         this.start = new IMutVector2(start);
         this.end = new IMutVector2(end);
         this.size = new IMutVector2(size);
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
         this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
-        this.bottomRight = new IMutVector2(end.x(), end.y() + size.y());
     }
 
     IAtomicRect2(int x, int y, int width, int height) {
         start = new IMutVector2(x, y);
         end = new IMutVector2(x + width, y + height);
         size = new IMutVector2(width, height);
-        bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
-        bottomRight = new IMutVector2(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     IAtomicRect2(IVector2 start, IVector2 size) {
         this.start = new IMutVector2(start);
         end = new IMutVector2(start.x() + size.x(), start.y() + size.y());
         this.size = new IMutVector2(size);
-        bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
-        bottomRight = new IMutVector2(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     IAtomicRect2(IRect2 other) {
         this.start = new IMutVector2(other.start());
         this.end = new IMutVector2(other.end());
         this.size = new IMutVector2(other.size());
-        bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
-        bottomRight = new IMutVector2(end.x(), end.y() + size.y());
+        this.topRight = new IMutVector2(start.x() + size.x(), start.y());
+        this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
     }
 
     public IConstRect2 asIRec2() {
@@ -128,6 +128,7 @@ public class IAtomicRect2 implements IRect2 {
             lock.unlockWrite(stamp);
         }
     }
+
     public void setSize(IVector2 size) {
         long stamp = lock.writeLock();
         try {
@@ -137,7 +138,6 @@ public class IAtomicRect2 implements IRect2 {
             lock.unlockWrite(stamp);
         }
     }
-
 
     public void setSize(int x, int y) {
         long stamp = lock.writeLock();
@@ -282,8 +282,8 @@ public class IAtomicRect2 implements IRect2 {
     }
 
     private void reCalcBottomCorners() {
+        topRight.setXY(start.x() + size.x(), start.y());
         bottomLeft.setXY(start.x(), start.y() + size.y());
-        bottomRight.setXY(end.x(), end.y() + size.y());
     }
 
     @Override
@@ -304,11 +304,11 @@ public class IAtomicRect2 implements IRect2 {
     @Override
     public IVector2 topRight() {
         long stamp = lock.tryOptimisticRead();
-        IVector2 result = end;
+        IVector2 result = topRight;
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
             try {
-                result = end;
+                result = topRight;
             } finally {
                 lock.unlockRead(stamp);
             }
@@ -334,11 +334,11 @@ public class IAtomicRect2 implements IRect2 {
     @Override
     public IVector2 bottomRight() {
         long stamp = lock.tryOptimisticRead();
-        IVector2 result = bottomRight;
+        IVector2 result = end;
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
             try {
-                result = bottomRight;
+                result = end;
             } finally {
                 lock.unlockRead(stamp);
             }
@@ -347,13 +347,13 @@ public class IAtomicRect2 implements IRect2 {
     }
 
     @Override
-    public ILine2 leftEdge() {
+    public IMutLine2 leftEdge() {
         long stamp = lock.tryOptimisticRead();
-        ILine2 line = new IConstLine2(start.x(), start.y(), start.x(), start.y() + size().y());
+        IMutLine2 line = new IMutLine2(start.x(), start.y(), start.x(), start.y() + size().y());
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
             try {
-                line = new IConstLine2(start.x(), start.y(), start.x(), start.y() + size().y());
+                line = new IMutLine2(start.x(), start.y(), start.x(), start.y() + size().y());
             } finally {
                 lock.unlockRead(stamp);
             }
@@ -362,13 +362,13 @@ public class IAtomicRect2 implements IRect2 {
     }
 
     @Override
-    public ILine2 rightEdge() {
+    public IMutLine2 rightEdge() {
         long stamp = lock.tryOptimisticRead();
-        ILine2 line = new IConstLine2(end.x(), end.y(), end.x(), end.y() + size().y());
+        IMutLine2 line = new IMutLine2(end.x(), start.y(), end.x(), start.y() + size().y());
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
             try {
-                line = new IConstLine2(end.x(), end.y(), end.x(), end.y() + size().y());
+                line = new IMutLine2(end.x(), start.y(), end.x(), start.y() + size().y());
             } finally {
                 lock.unlockRead(stamp);
             }
@@ -377,13 +377,13 @@ public class IAtomicRect2 implements IRect2 {
     }
 
     @Override
-    public ILine2 topEdge() {
+    public IMutLine2 topEdge() {
         long stamp = lock.tryOptimisticRead();
-        ILine2 line = new IConstLine2(start.x(), start.y(), end.x(), end.y());
+        IMutLine2 line = new IMutLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
             try {
-                line = new IConstLine2(start.x(), start.y(), end.x(), end.y());
+                line = new IMutLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());
             } finally {
                 lock.unlockRead(stamp);
             }
@@ -392,13 +392,13 @@ public class IAtomicRect2 implements IRect2 {
     }
 
     @Override
-    public ILine2 bottomEdge() {
+    public IMutLine2 bottomEdge() {
         long stamp = lock.tryOptimisticRead();
-        ILine2 line = new IConstLine2(start.x(), start.y() + size().y(), end.x(), end.y() + size().y());
+        IMutLine2 line =new IMutLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
             try {
-                line = new IConstLine2(start.x(), start.y() + size().y(), end.x(), end.y() + size().y());
+                line = new IMutLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());
             } finally {
                 lock.unlockRead(stamp);
             }

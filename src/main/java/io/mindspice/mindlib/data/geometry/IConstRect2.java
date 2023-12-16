@@ -3,14 +3,18 @@ package io.mindspice.mindlib.data.geometry;
 public record IConstRect2(
         IVector2 start,
         IVector2 end,
-        IVector2 size
+        IVector2 size,
+        IVector2 topRight,
+        IVector2 bottomLeft
 ) implements IRect2 {
 
     IConstRect2(int x, int y, int width, int height) {
         this(
                 new IConstVector2(x, y),
                 new IConstVector2(x + width, y + height),
-                new IConstVector2(width, height)
+                new IConstVector2(width, height),
+                new IConstVector2(x + width, y),
+                new IConstVector2(x, y + height)
         );
     }
 
@@ -18,7 +22,9 @@ public record IConstRect2(
         this(
                 start,
                 new IConstVector2(start.x() + size.x(), start.y() + size.y()),
-                size
+                size,
+                new IConstVector2(start.x() + size.x(), start.y()),
+                new IConstVector2(start.x(), start.y() + size.y())
         );
     }
 
@@ -26,7 +32,9 @@ public record IConstRect2(
         this(
                 IVector2.of(other.start()),
                 IVector2.of(other.end()),
-                IVector2.of(other.size())
+                IVector2.of(other.size()),
+                IVector2.of(other.topRight()),
+                IVector2.of(other.bottomLeft())
         );
     }
 
@@ -65,19 +73,19 @@ public record IConstRect2(
 
     @Override
     public IConstRect2 combine(IRect2 other) {
-        IConstVector2 newStart = new IConstVector2(
+        IMutVector2 newStart = new IMutVector2(
                 Math.min(start.x(), other.start().x()),
                 Math.min(start.y(), other.start().y())
         );
-        IConstVector2 newEnd = new IConstVector2(
+        IMutVector2 newEnd = new IMutVector2(
                 Math.max(end.x(), other.end().x()),
                 Math.max(end.y(), other.end().y())
         );
-        return new IConstRect2(
-                newStart,
-                newEnd,
-                new IConstVector2(newEnd.x() - newStart.x(), newEnd.y() - newStart.y())
-        );
+        IMutVector2 newSize = new IMutVector2(newEnd.x() - newStart.x(), newEnd.y() - newStart.y());
+        IMutVector2 newTopRight = new IMutVector2(newStart.x() + newSize.x(), newStart.y());
+        IMutVector2 newBottomLeft = new IMutVector2(newStart.x(), newStart.y() + newSize.y());
+
+        return new IConstRect2(newStart, newEnd, newSize, newTopRight, newBottomLeft);
     }
 
     @Override
@@ -87,17 +95,17 @@ public record IConstRect2(
 
     @Override
     public IVector2 topRight() {
-        return end;
+        return topRight;
     }
 
     @Override
     public IVector2 bottomLeft() {
-        return new IConstVector2(start.x(), start.y() + size().y());
+        return bottomLeft;
     }
 
     @Override
     public IVector2 bottomRight() {
-        return new IConstVector2(end.x(), end.y() + size().y());
+        return end;
     }
 
     @Override
@@ -107,17 +115,15 @@ public record IConstRect2(
 
     @Override
     public ILine2 rightEdge() {
-        return new IConstLine2(end.x(), end.y(), end.x(), end.y() + size().y());
-    }
+        return new IConstLine2(end.x(), start.y(), end.x(), start.y() + size().y());    }
 
     @Override
     public ILine2 topEdge() {
-        return new IConstLine2(start.x(), start.y(), end.x(), end.y());
+        return new IConstLine2(start.x(), start.y(), end.x(), start.y());
     }
-
     @Override
     public ILine2 bottomEdge() {
-        return new IConstLine2(start.x(), start.y() + size().y(), end.x(), end.y() + size().y());
+        return new IConstLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());
     }
 
     @Override
