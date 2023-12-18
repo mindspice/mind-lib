@@ -28,7 +28,6 @@ public record IPolygon2(
         return inside;
     }
 
-
     public static IPolygon2 of(IVector2[] points) {
         return new IPolygon2(points);
     }
@@ -54,8 +53,34 @@ public record IPolygon2(
         return testLine.intersects(line);
     }
 
+    public IRect2 boundingBox() {
+        if (points == null || points.length == 0) {
+            return IRect2.of(0, 0, 0, 0); // Or an empty IRect2, depending on your design
+        }
+
+        int minX = points[0].x();
+        int minY = points[0].y();
+        int maxX = minX;
+        int maxY = minY;
+
+        for (IVector2 point : points) {
+            if (point.x() < minX) {
+                minX = point.x();
+            }
+            if (point.x() > maxX) {
+                maxX = point.x();
+            }
+            if (point.y() < minY) {
+                minY = point.y();
+            }
+            if (point.y() > maxY) {
+                maxY = point.y();
+            }
+        }
+        return IRect2.of(minX, minY, maxX - minX, maxY - minY);
+    }
+
     public boolean pointOnLine(IVector2 point, IVector2 lineStart, IVector2 lineEnd) {
-        // Check if the point is on the line segment defined by lineStart and lineEnd
         if (lineStart.y() == lineEnd.y() && lineStart.y() == point.y() &&
                 (point.x() >= Math.min(lineStart.x(), lineEnd.x()) && point.x() <= Math.max(lineStart.x(), lineEnd.x()))) {
             return true;

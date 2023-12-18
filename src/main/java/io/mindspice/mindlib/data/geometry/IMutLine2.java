@@ -32,6 +32,21 @@ public class IMutLine2 implements ILine2 {
     }
 
     @Override
+    public boolean isPointLine() {
+        return start.equals(end);
+    }
+
+    public void shiftLine(IVector2 newEnd) {
+        start.setXY(end);
+        end.setXY(newEnd);
+    }
+
+    public void shiftLine(int x, int y) {
+        start.setXY(end);
+        end.setXY(x, y);
+    }
+
+    @Override
     public boolean intersects(ILine2 otherLine) {
         // Find the four orientations needed for general and
         // special cases

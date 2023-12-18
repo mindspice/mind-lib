@@ -6,10 +6,10 @@ import java.util.Comparator;
 import java.util.List;
 
 
-public class IQuadTree<T> {
+public class IVectorQuadTree<T> {
     private final Node root;
 
-    public IQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
+    public IVectorQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
@@ -21,6 +21,11 @@ public class IQuadTree<T> {
         List<QuadItem<T>> foundItems = new ArrayList<>();
         root.query(searchArea, foundItems);
         return foundItems;
+    }
+
+    public List<QuadItem<T>> query(IRect2 searchArea, List<QuadItem<T>> queryRtnList) {
+        root.query(searchArea, queryRtnList);
+        return queryRtnList;
     }
 
     public void remove(IVector2 position, T item) {
@@ -61,7 +66,7 @@ public class IQuadTree<T> {
         }
 
         boolean insert(QuadItem<T> item) {
-            if (!quadrant.contains(item.position)) {
+            if (!quadrant.contains(item.position())) {
                 return false;
             }
 
@@ -101,7 +106,7 @@ public class IQuadTree<T> {
             for (int i = 0; i < currCapacity; i++) {
                 if (items[i].position().equals(position) && items[i].item().equals(item)) {
                     QuadItem<T> foundItem = items[i];
-                    foundItem.position.setXY(newPosition);
+                    foundItem.position().setXY(newPosition);
                     if (quadrant.contains(newPosition)) {
                         return true;
                     }
@@ -208,20 +213,20 @@ public class IQuadTree<T> {
 
         private boolean insertIntoSubQuad(QuadItem<T> item) {
             // Insert the item into the appropriate sub-quadrant
-            if (tLeftInnerQuad.quadrant.contains(item.position)) {
+            if (tLeftInnerQuad.quadrant.contains(item.position())) {
                 return tLeftInnerQuad.insert(item);
             }
-            if (tRightInnerQuad.quadrant.contains(item.position)) {
+            if (tRightInnerQuad.quadrant.contains(item.position())) {
                 return tRightInnerQuad.insert(item);
             }
-            if (bLeftInnerQuad.quadrant.contains(item.position)) {
+            if (bLeftInnerQuad.quadrant.contains(item.position())) {
                 return bLeftInnerQuad.insert(item);
             }
-            if (bRightInnerQuad.quadrant.contains(item.position)) {
+            if (bRightInnerQuad.quadrant.contains(item.position())) {
                 return bRightInnerQuad.insert(item);
             }
 
-            throw new IllegalStateException("Insertion Failed. Position:" + item.position + "\nQuadrants:\n "
+            throw new IllegalStateException("Insertion Failed. Position:" + item.position() + "\nQuadrants:\n "
                     + tLeftInnerQuad + tRightInnerQuad + bLeftInnerQuad + bRightInnerQuad);
 
         }
@@ -318,12 +323,5 @@ public class IQuadTree<T> {
     @Override
     public String toString() {
         return root.toString();
-    }
-
-    public record QuadItem<T>(IMutVector2 position, T item) {
-        @Override
-        public String toString() {
-            return "Position: " + position + ", Item: " + item;
-        }
     }
 }
