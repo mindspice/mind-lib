@@ -6,10 +6,10 @@ import java.util.*;
 import java.util.concurrent.locks.StampedLock;
 
 
-public class IConcurrentQuadTree<T> {
+public class IConcurrentVQuadTree<T> {
     private final Node root;
 
-    public IConcurrentQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
+    public IConcurrentVQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
@@ -21,6 +21,11 @@ public class IConcurrentQuadTree<T> {
         List<QuadItem<T>> foundItems = new ArrayList<>();
         root.query(searchArea, foundItems);
         return foundItems;
+    }
+
+    public List<QuadItem<T>> query(IRect2 searchArea, List<QuadItem<T>> foundList) {
+        root.query(searchArea, foundList);
+        return foundList;
     }
 
     public void remove(IVector2 position, T item) {
@@ -66,7 +71,7 @@ public class IConcurrentQuadTree<T> {
             boolean contains;
             do {
                 rStamp = lock.tryOptimisticRead();
-                contains = quadrant.contains(item.position);
+                contains = quadrant.contains(item.position());
             } while (!lock.validate(rStamp));
 
             if (!contains) {
@@ -123,7 +128,7 @@ public class IConcurrentQuadTree<T> {
                 for (int i = 0; i < currCapacity; i++) {
                     if (items[i].position().equals(position) && items[i].item().equals(item)) {
                         QuadItem<T> foundItem = items[i];
-                        foundItem.position.setXY(newPosition);
+                        foundItem.position().setXY(newPosition);
                         if (quadrant.contains(newPosition)) {
                             return true;
                         }
@@ -131,12 +136,13 @@ public class IConcurrentQuadTree<T> {
                         currCapacity--;
                         items[currCapacity] = null;
                         lock.unlockWrite(stamp);
+                        stamp = -1;
                         return backInsert(this, foundItem);
                     }
                 }
                 return false;
             } finally {
-                lock.unlockWrite(stamp);
+                if (stamp != -1) { lock.unlockWrite(stamp); }
             }
         }
 
@@ -264,29 +270,29 @@ public class IConcurrentQuadTree<T> {
             boolean contains;
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = tLeftInnerQuad.quadrant.contains(item.position);
+                contains = tLeftInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return tLeftInnerQuad.insert(item); }
 
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = tRightInnerQuad.quadrant.contains(item.position);
+                contains = tRightInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return tRightInnerQuad.insert(item); }
 
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = bLeftInnerQuad.quadrant.contains(item.position);
+                contains = bLeftInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return bLeftInnerQuad.insert(item); }
 
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = bRightInnerQuad.quadrant.contains(item.position);
+                contains = bRightInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return bRightInnerQuad.insert(item); }
 
-            throw new IllegalStateException("Insertion Failed. Position:" + item.position + "\nQuadrants:\n "
+            throw new IllegalStateException("Insertion Failed. Position:" + item.position() + "\nQuadrants:\n "
                     + tLeftInnerQuad + tRightInnerQuad + bLeftInnerQuad + bRightInnerQuad);
 
         }
@@ -431,10 +437,5 @@ public class IConcurrentQuadTree<T> {
         return root.toString();
     }
 
-    public record QuadItem<T>(IMutVector2 position, T item) {
-        @Override
-        public String toString() {
-            return "Position: " + position + ", Item: " + item;
-        }
-    }
+
 }

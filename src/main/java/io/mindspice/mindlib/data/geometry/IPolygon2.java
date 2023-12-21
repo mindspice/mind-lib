@@ -32,8 +32,18 @@ public record IPolygon2(
         return new IPolygon2(points);
     }
 
-    public static IPolygon2 of(List<IVector2> points) {
-        return new IPolygon2(points.toArray(new IVector2[0]));
+
+    public static IPolygon2 of(List<Integer> points) {
+        if (points.size() % 2 != 0) {
+            throw new IllegalStateException("Must have an even numbers of x,y points");
+        }
+        IVector2[] pointArr = new IVector2[points.size() / 2];
+        int p = 0;
+        for (int i = 0; i < points.size() - 1; i += 2) {
+            pointArr[p] = IVector2.of(points.get(i), points.get(i + 1));
+            p++;
+        }
+        return new IPolygon2(pointArr);
     }
 
     public boolean intersects(int startX, int startY, int endX, int endY) {

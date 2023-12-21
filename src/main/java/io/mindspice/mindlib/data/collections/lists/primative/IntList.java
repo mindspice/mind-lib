@@ -89,6 +89,11 @@ public class IntList {
         return dataElements[index];
     }
 
+    public void set(int index, int integer) {
+        if (index < 0 || index > size -1) { throw new ArrayIndexOutOfBoundsException(); }
+        dataElements[index] = integer;
+    }
+
     public boolean addAll(List<Integer> list) {
         int requiredCapacity = size + list.size();
         if (dataElements.length < requiredCapacity) {
@@ -128,12 +133,13 @@ public class IntList {
         return true;
     }
 
-    public boolean remove(int index) {
+    public boolean removeAtIndex(int index) {
         if (index >= size || index < 0) return false;
         System.arraycopy(dataElements, index + 1, dataElements, index, size - index - 1);
         size--;
         return true;
     }
+
 
     public void clear() {
         dataElements = new int[10];

@@ -6,6 +6,7 @@ public class IMutRect2 implements IRect2 {
     private IMutVector2 size;
     private IMutVector2 bottomLeft;
     private IMutVector2 topRight;
+    private IMutVector2 center;
 
     IMutRect2(IVector2 start, IVector2 end, IVector2 size) {
         this.start = IVector2.ofMutable(start);
@@ -13,6 +14,8 @@ public class IMutRect2 implements IRect2 {
         this.size = IVector2.ofMutable(size);
         this.topRight = new IMutVector2(start.x() + size.x(), start.y());
         this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
+        this.center = new IMutVector2(start.x() + (size.x() / 2), start.y() + (size.y() / 2));
+
     }
 
     IMutRect2(int x, int y, int width, int height) {
@@ -21,6 +24,7 @@ public class IMutRect2 implements IRect2 {
         size = new IMutVector2(width, height);
         this.topRight = new IMutVector2(start.x() + size.x(), start.y());
         this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
+        this.center = new IMutVector2(start.x() + (size.x() / 2), start.y() + (size.y() / 2));
     }
 
     IMutRect2(IVector2 start, IVector2 size) {
@@ -29,6 +33,7 @@ public class IMutRect2 implements IRect2 {
         this.size = new IMutVector2(size);
         this.topRight = new IMutVector2(start.x() + size.x(), start.y());
         this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
+        this.center = new IMutVector2(start.x() + (size.x() / 2), start.y() + (size.y() / 2));
     }
 
     IMutRect2(IRect2 other) {
@@ -37,6 +42,7 @@ public class IMutRect2 implements IRect2 {
         this.size = new IMutVector2(other.size());
         this.topRight = new IMutVector2(start.x() + size.x(), start.y());
         this.bottomLeft = new IMutVector2(start.x(), start.y() + size.y());
+        this.center = new IMutVector2(start.x() + (size.x() / 2), start.y() + (size.y() / 2));
     }
 
     public IConstRect2 asIRec2() {
@@ -89,10 +95,10 @@ public class IMutRect2 implements IRect2 {
     }
 
     public IMutRect2 reCenter(int x, int y) {
-        start.setX(x - (size.x() / 2));
-        start.setY(y - (size.y() / 2));
         end.setX(start.x() + size.x());
         end.setY(start.y() + size.y());
+        start.setX(x - (size.x() / 2));
+        start.setY(y - (size.y() / 2));
         reCalcBottomCorners();
         return this;
     }
@@ -156,6 +162,7 @@ public class IMutRect2 implements IRect2 {
     private void reCalcBottomCorners() {
         topRight.setXY(start.x() + size.x(), start.y());
         bottomLeft.setXY(start.x(), start.y() + size.y());
+        center.setXY(start.x() + (size.x() / 2), start.y() + (size.y() / 2));
     }
 
     @Override
@@ -192,6 +199,7 @@ public class IMutRect2 implements IRect2 {
     public IMutLine2 topEdge() {
         return new IMutLine2(start.x(), start.y(), end.x(), start.y());
     }
+
     @Override
     public IMutLine2 bottomEdge() {
         return new IMutLine2(start.x(), start.y() + size.y(), end.x(), start.y() + size.y());

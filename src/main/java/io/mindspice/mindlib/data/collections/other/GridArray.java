@@ -22,6 +22,11 @@ public class GridArray<T> {
         return  grid[y * width + x];
     }
 
+    @SuppressWarnings("unchecked")
+    public T getFlat(int i) {
+        return  grid[i];
+    }
+
     public void set(int x, int y, T value) {
         grid[y * width + x] = value;
     }
@@ -37,6 +42,19 @@ public class GridArray<T> {
     public int size() {
         return size;
     }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int getFlatSize() {
+        return grid.length;
+    }
+
 
 
 }

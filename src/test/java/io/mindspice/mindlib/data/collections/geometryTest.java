@@ -118,13 +118,12 @@ public class geometryTest {
         }
     }
 
-
     @Test
     void quadMapTest() {
         int boundX = 1920;
         int boundY = 1920;
         IRect2 bounds = IRect2.of(0, 0, boundX, boundY);
-        IVectorQuadTree<Object> quadTree = new IVectorQuadTree<>(bounds, 4); // 4 is the capacity per quadrant
+        IConcurrentVQuadTree<Object> quadTree = new IConcurrentVQuadTree<>(bounds, 4); // 4 is the capacity per quadrant
         for (int i = 0; i < 100; i++) {
             int x = ThreadLocalRandom.current().nextInt(boundX); // Random x-coordinate within bounds
             int y = ThreadLocalRandom.current().nextInt(boundY); // Random y-coordinate within bounds
@@ -132,7 +131,7 @@ public class geometryTest {
             Object obj = new Object();
             quadTree.insert(position, obj);
         }
-        var tVec = IVector2.of(500,500);
+        var tVec = IVector2.of(500, 500);
         Object obj = new Object();
         System.out.println(obj);
         quadTree.insert(tVec, obj);
@@ -144,17 +143,20 @@ public class geometryTest {
         quadTree.update(IVector2.of(510, 510), IVector2.of(900, 900), obj);
         System.out.println("\n\n");
         System.out.println(quadTree);
-        quadTree.update(IVector2.of(900, 900), IVector2.of( 1900, 1900), obj);
+        quadTree.update(IVector2.of(900, 900), IVector2.of(1900, 1900), obj);
         System.out.println("\n\n");
         System.out.println(quadTree);
 
+        for (int i = 0; i < 100; ++i) {
+            quadTree.query(IRect2.of(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920), 1200, 900 ));
+        }
 
     }
 
     @Test
     void randomTest() throws InterruptedException {
-        int boundX = 1920 * 2;
-        int boundY = 1920 * 2;
+        int boundX = 81920;
+        int boundY = 81920;
         IRect2 bounds = IRect2.of(0, 0, boundX, boundY);
         IVectorQuadTree<Object> quadTree = new IVectorQuadTree<>(bounds, 6); // 4 is the capacity per quadrant
         IKDTree2D<Object> spacMap = new IKDTree2D<>(bounds);
@@ -162,7 +164,7 @@ public class geometryTest {
         Random rand = new Random();
 
         // Generate and insert 100 random objects
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 5000000; i++) {
             int x = rand.nextInt(boundX); // Random x-coordinate within bounds
             int y = rand.nextInt(boundY); // Random y-coordinate within bounds
             IVector2 position = IVector2.of(x, y);
@@ -179,8 +181,8 @@ public class geometryTest {
         int conts = 0;
         for (int i = 0; i < 100_000; ++i) {
             for (int j = 0; j < 400; ++j) {
-               // mutRec.reCenter(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920));
-               // mmm.setXY(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920));
+                // mutRec.reCenter(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920));
+                // mmm.setXY(ThreadLocalRandom.current().nextInt(1920), ThreadLocalRandom.current().nextInt(1920));
                 if (mutRec.contains(mmm)) {
                     conts++;
                 }

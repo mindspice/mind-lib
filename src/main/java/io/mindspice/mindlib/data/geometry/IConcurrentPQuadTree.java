@@ -14,11 +14,11 @@ public class IConcurrentPQuadTree<T> {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
-    public void insert(IRect2 rect, T item) {
-        root.insert(new QuadItem<>(IVector2.ofMutable(rect.topLeft()), item));
-        root.insert(new QuadItem<>(IVector2.ofMutable(rect.topRight()), item));
-        root.insert(new QuadItem<>(IVector2.ofMutable(rect.bottomLeft()), item));
-        root.insert(new QuadItem<>(IVector2.ofMutable(rect.bottomRight()), item));
+    public void insert(IPolygon2 poly, T item) {
+
+        for (int i = 0; i < poly.points().length; i++) {
+            root.insert(new QuadItem<>(IVector2.ofMutable(poly.points()[i]), item));
+        }
     }
 
     public List<QuadItem<T>> query(IRect2 searchArea) {
@@ -27,22 +27,26 @@ public class IConcurrentPQuadTree<T> {
         return foundItems;
     }
 
-    public void remove(IRect2 rect, T item) {
-        root.remove(IVector2.ofMutable(rect.topLeft()), item);
-        root.remove(IVector2.ofMutable(rect.topRight()), item);
-        root.remove(IVector2.ofMutable(rect.bottomLeft()), item);
-        root.remove(IVector2.ofMutable(rect.bottomRight()), item);
+    public List<QuadItem<T>> query(IRect2 searchArea, List<QuadItem<T>> foundList) {
+        root.query(searchArea, foundList);
+        return foundList;
     }
 
-    public QuadItem<T> removeAndGet(IVector2 position, T item) {
-        return root.removeAndGet(position, item);
+
+    public void remove(IPolygon2 poly, T item) {
+        for (int i = 0; i < poly.points().length; i++) {
+            root.insert(new QuadItem<>(IVector2.ofMutable(poly.points()[i]), item));
+        }
     }
 
-    public boolean update(IRect2 oldPosition, IRect2 newPosition, T item) {
-        return root.update(oldPosition.topLeft(), newPosition.topLeft(), item)
-                || root.update(oldPosition.topRight(), newPosition.topRight(), item)
-                || root.update(oldPosition.bottomLeft(), newPosition.bottomLeft(), item)
-                || root.update(oldPosition.bottomRight(), newPosition.bottomRight(), item);
+    public boolean update(IPolygon2 oldPoly, IPolygon2 newPoly, T item) {
+        boolean failed = false;
+        for (int i = 0; i < oldPoly.points().length; i++) {
+            if (!root.update(oldPoly.points()[i], newPoly.points()[i], item)) {
+                failed = true;
+            }
+        }
+        return failed;
     }
 
     public void deFragment() {
@@ -76,7 +80,7 @@ public class IConcurrentPQuadTree<T> {
             boolean contains;
             do {
                 rStamp = lock.tryOptimisticRead();
-                contains = quadrant.contains(item.position);
+                contains = quadrant.contains(item.position());
             } while (!lock.validate(rStamp));
 
             if (!contains) {
@@ -133,7 +137,7 @@ public class IConcurrentPQuadTree<T> {
                 for (int i = 0; i < currCapacity; i++) {
                     if (items[i].position().equals(position) && items[i].item().equals(item)) {
                         QuadItem<T> foundItem = items[i];
-                        foundItem.position.setXY(newPosition);
+                        foundItem.position().setXY(newPosition);
                         if (quadrant.contains(newPosition)) {
                             return true;
                         }
@@ -275,29 +279,29 @@ public class IConcurrentPQuadTree<T> {
             boolean contains;
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = tLeftInnerQuad.quadrant.contains(item.position);
+                contains = tLeftInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return tLeftInnerQuad.insert(item); }
 
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = tRightInnerQuad.quadrant.contains(item.position);
+                contains = tRightInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return tRightInnerQuad.insert(item); }
 
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = bLeftInnerQuad.quadrant.contains(item.position);
+                contains = bLeftInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return bLeftInnerQuad.insert(item); }
 
             do {
                 stamp = lock.tryOptimisticRead();
-                contains = bRightInnerQuad.quadrant.contains(item.position);
+                contains = bRightInnerQuad.quadrant.contains(item.position());
             } while (!lock.validate(stamp));
             if (contains) { return bRightInnerQuad.insert(item); }
 
-            throw new IllegalStateException("Insertion Failed. Position:" + item.position + "\nQuadrants:\n "
+            throw new IllegalStateException("Insertion Failed. Position:" + item.position() + "\nQuadrants:\n "
                     + tLeftInnerQuad + tRightInnerQuad + bLeftInnerQuad + bRightInnerQuad);
 
         }
@@ -442,10 +446,4 @@ public class IConcurrentPQuadTree<T> {
         return root.toString();
     }
 
-    public record QuadItem<T>(IMutVector2 position, T item) {
-        @Override
-        public String toString() {
-            return "Position: " + position + ", Item: " + item;
-        }
-    }
 }
