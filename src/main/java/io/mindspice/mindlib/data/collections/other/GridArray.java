@@ -19,7 +19,7 @@ public class GridArray<T> {
 
     @SuppressWarnings("unchecked")
     public T get(int x, int y) {
-        return (T) grid[y * width + x];
+        return  grid[y * width + x];
     }
 
     public void set(int x, int y, T value) {
@@ -38,9 +38,6 @@ public class GridArray<T> {
         return size;
     }
 
-    @SuppressWarnings("unchecked")
-    public T[] backingArray() {
-        return grid;
-    }
+
 }
 

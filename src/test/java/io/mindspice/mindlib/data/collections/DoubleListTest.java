@@ -1,5 +1,6 @@
 package io.mindspice.mindlib.data.collections;
 
+
 import io.mindspice.mindlib.data.collections.lists.primative.DoubleList;
 import org.junit.jupiter.api.Test;
 

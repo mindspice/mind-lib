@@ -1,5 +1,6 @@
 package io.mindspice.mindlib.data.collections;
 
+import io.mindspice.mindlib.data.collections.other.GridArray;
 import org.junit.jupiter.api.Test;
 
 
@@ -55,6 +56,17 @@ public class OtherTests {
         }
         System.out.println(tTime / col);
         System.out.println(col);
+    }
+
+    @Test
+    void gridArray(){
+        var ga = new GridArray<Object>(4,4);
+        for (int i = 0; i < 4; ++i) {
+            for(int j = 0; j < 4; ++ j){
+                ga.set(i,j, new Object());
+                System.out.println(ga.get(i,j));
+            }
+        }
     }
 
 

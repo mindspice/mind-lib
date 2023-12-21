@@ -1,20 +1,24 @@
 package io.mindspice.mindlib.data.geometry;
 
-import io.mindspice.mindlib.util.Utils;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.locks.StampedLock;
 
 
-public class IConcurrentQuadTree<T> {
+public class IConcurrentPQuadTree<T> {
     private final Node root;
 
-    public IConcurrentQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
+    public IConcurrentPQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
-    public void insert(IVector2 position, T item) {
-        root.insert(new QuadItem<>(IVector2.ofMutable(position), item));
+    public void insert(IRect2 rect, T item) {
+        root.insert(new QuadItem<>(IVector2.ofMutable(rect.topLeft()), item));
+        root.insert(new QuadItem<>(IVector2.ofMutable(rect.topRight()), item));
+        root.insert(new QuadItem<>(IVector2.ofMutable(rect.bottomLeft()), item));
+        root.insert(new QuadItem<>(IVector2.ofMutable(rect.bottomRight()), item));
     }
 
     public List<QuadItem<T>> query(IRect2 searchArea) {
@@ -23,16 +27,22 @@ public class IConcurrentQuadTree<T> {
         return foundItems;
     }
 
-    public void remove(IVector2 position, T item) {
-        root.remove(position, item);
+    public void remove(IRect2 rect, T item) {
+        root.remove(IVector2.ofMutable(rect.topLeft()), item);
+        root.remove(IVector2.ofMutable(rect.topRight()), item);
+        root.remove(IVector2.ofMutable(rect.bottomLeft()), item);
+        root.remove(IVector2.ofMutable(rect.bottomRight()), item);
     }
 
     public QuadItem<T> removeAndGet(IVector2 position, T item) {
         return root.removeAndGet(position, item);
     }
 
-    public boolean update(IVector2 oldPosition, IVector2 newPosition, T item) {
-        return root.update(oldPosition, newPosition, item);
+    public boolean update(IRect2 oldPosition, IRect2 newPosition, T item) {
+        return root.update(oldPosition.topLeft(), newPosition.topLeft(), item)
+                || root.update(oldPosition.topRight(), newPosition.topRight(), item)
+                || root.update(oldPosition.bottomLeft(), newPosition.bottomLeft(), item)
+                || root.update(oldPosition.bottomRight(), newPosition.bottomRight(), item);
     }
 
     public void deFragment() {
@@ -131,12 +141,13 @@ public class IConcurrentQuadTree<T> {
                         currCapacity--;
                         items[currCapacity] = null;
                         lock.unlockWrite(stamp);
+                        stamp = -1;
                         return backInsert(this, foundItem);
                     }
                 }
                 return false;
             } finally {
-                lock.unlockWrite(stamp);
+                if (stamp != -1) { lock.unlockWrite(stamp); }
             }
         }
 

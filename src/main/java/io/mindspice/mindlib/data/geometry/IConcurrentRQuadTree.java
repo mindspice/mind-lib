@@ -1,15 +1,16 @@
 package io.mindspice.mindlib.data.geometry;
 
-import io.mindspice.mindlib.util.Utils;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.locks.StampedLock;
 
 
-public class IConcurrentQuadTree<T> {
+public class IConcurrentRQuadTree<T> {
     private final Node root;
 
-    public IConcurrentQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
+    public IConcurrentRQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
@@ -131,12 +132,13 @@ public class IConcurrentQuadTree<T> {
                         currCapacity--;
                         items[currCapacity] = null;
                         lock.unlockWrite(stamp);
+                        stamp = -1;
                         return backInsert(this, foundItem);
                     }
                 }
                 return false;
             } finally {
-                lock.unlockWrite(stamp);
+                if (stamp != -1) { lock.unlockWrite(stamp); }
             }
         }
 
