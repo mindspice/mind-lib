@@ -1,5 +1,6 @@
 package io.mindspice.mindlib.data.collections.other;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 
@@ -55,7 +56,15 @@ public class GridArray<T> {
         return grid.length;
     }
 
-
-
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("GridArray: ");
+        sb.append("\n  grid: ").append(Arrays.toString(grid));
+        sb.append(",\n  width: ").append(width);
+        sb.append(",\n  height: ").append(height);
+        sb.append(",\n  size: ").append(size);
+        sb.append("\n");
+        return sb.toString();
+    }
 }
 

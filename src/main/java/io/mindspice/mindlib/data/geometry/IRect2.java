@@ -44,6 +44,10 @@ public interface IRect2 {
         return new IConstRect2(start, size);
     }
 
+    static IRect2 of(IRect2 rect) {
+        return new IConstRect2(rect);
+    }
+
     static IMutRect2 ofMutable(int x, int y, int width, int height) {
         return new IMutRect2(x, y, width, height);
     }

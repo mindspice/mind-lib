@@ -83,38 +83,74 @@ public class IAtomicLine2 implements ILine2 {
         return pointLine;
     }
 
-    @Override
+//    @Override
+//    public boolean intersects(ILine2 otherLine) {
+//        // Find the four orientations needed for general and
+//        // special cases
+//        long stamp = lock.readLock();
+//        try {
+//            int o1 = orientation(start(), end(), otherLine.start());
+//            int o2 = orientation(start(), end(), otherLine.end());
+//            int o3 = orientation(otherLine.start(), otherLine.end(), start());
+//            int o4 = orientation(otherLine.start(), otherLine.end(), end());
+//
+//            // General case
+//            if (o1 != o2 && o3 != o4) { return true; }
+//
+//            // Special Cases
+//            // start(), end() and otherLine.start() are collinear and otherLine.start() lies on segment start()end()
+//            if (o1 == 0 && onSegment(start(), otherLine.start(), end())) { return true; }
+//
+//            // start(), end() and otherLine.end() are collinear and otherLine.end() lies on segment start()end()
+//            if (o2 == 0 && onSegment(start(), otherLine.end(), end())) { return true; }
+//
+//            // otherLine.start(), otherLine.end() and start() are collinear and start() lies on segment otherLine.start()otherLine.end()
+//            if (o3 == 0 && onSegment(otherLine.start(), start(), otherLine.end())) { return true; }
+//
+//            // otherLine.start(), otherLine.end() and end() are collinear and end() lies on segment otherLine.start()otherLine.end()
+//            if (o4 == 0 && onSegment(otherLine.start(), end(), otherLine.end())) { return true; }
+//
+//            return false; // Doesn't fall in any of the above cases
+//        } finally {
+//            lock.unlockRead(stamp);
+//        }
+//    }
+
     public boolean intersects(ILine2 otherLine) {
-        // Find the four orientations needed for general and
-        // special cases
         long stamp = lock.readLock();
         try {
-            int o1 = orientation(start(), end(), otherLine.start());
-            int o2 = orientation(start(), end(), otherLine.end());
-            int o3 = orientation(otherLine.start(), otherLine.end(), start());
-            int o4 = orientation(otherLine.start(), otherLine.end(), end());
+            int x1 = this.start().x();
+            int y1 = this.start().y();
+            int x2 = this.end().x();
+            int y2 = this.end().y();
+            int x3 = otherLine.start().x();
+            int y3 = otherLine.start().y();
+            int x4 = otherLine.end().x();
+            int y4 = otherLine.end().y();
 
-            // General case
-            if (o1 != o2 && o3 != o4) { return true; }
+            int dx1 = x2 - x1;
+            int dy1 = y2 - y1;
+            int dx2 = x4 - x3;
+            int dy2 = y4 - y3;
 
-            // Special Cases
-            // start(), end() and otherLine.start() are collinear and otherLine.start() lies on segment start()end()
-            if (o1 == 0 && onSegment(start(), otherLine.start(), end())) { return true; }
+            int delta = dx1 * dy2 - dx2 * dy1;
+            if (delta == 0) {
+                // Segments are on parallel lines. Check if they are collinear and overlapping
+                boolean segmentsCollinear = (y3 - y1) * dx1 == dy1 * (x3 - x1);
+                boolean collisionOx = Math.max(x1, x2) >= Math.min(x3, x4) && Math.min(x1, x2) <= Math.max(x3, x4);
+                boolean collisionOy = Math.max(y1, y2) >= Math.min(y3, y4) && Math.min(y1, y2) <= Math.max(y3, y4);
+                return segmentsCollinear && collisionOx && collisionOy;
+            }
 
-            // start(), end() and otherLine.end() are collinear and otherLine.end() lies on segment start()end()
-            if (o2 == 0 && onSegment(start(), otherLine.end(), end())) { return true; }
+            double s = (double) (dx1 * (y1 - y3) - dy1 * (x1 - x3)) / delta;
+            double t = (double) (dx2 * (y1 - y3) - dy2 * (x1 - x3)) / delta;
 
-            // otherLine.start(), otherLine.end() and start() are collinear and start() lies on segment otherLine.start()otherLine.end()
-            if (o3 == 0 && onSegment(otherLine.start(), start(), otherLine.end())) { return true; }
-
-            // otherLine.start(), otherLine.end() and end() are collinear and end() lies on segment otherLine.start()otherLine.end()
-            if (o4 == 0 && onSegment(otherLine.start(), end(), otherLine.end())) { return true; }
-
-            return false; // Doesn't fall in any of the above cases
+            return 0 <= s && s <= 1 && 0 <= t && t <= 1;
         } finally {
             lock.unlockRead(stamp);
         }
     }
+
 
     private int orientation(IVector2 p, IVector2 q, IVector2 r) {
         long stamp = lock.readLock();

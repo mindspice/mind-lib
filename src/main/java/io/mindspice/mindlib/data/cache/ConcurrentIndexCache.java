@@ -50,10 +50,27 @@ public class ConcurrentIndexCache<T> {
         this.skipFactor = skipFactor;
     }
 
-    public int getNextIndex() {
+    public int getAndReserveNextIndex() {
         long stamp = lock.writeLock();
         try {
-            return nextIndex;
+            if (openIndexes.isEmpty()) {
+                return ++nextIndex;
+            } else {
+                return openIndexes.removeLast();
+            }
+        } finally {
+            lock.unlockWrite(stamp);
+        }
+    }
+
+    public void putAtReservedIndex(int index, T item) {
+        long stamp = lock.writeLock();
+        try {
+            if (elements.get(index) != null) {
+                throw new IllegalStateException("Index is already in use");
+            } else {
+                elements.put(index, item);
+            }
         } finally {
             lock.unlockWrite(stamp);
         }

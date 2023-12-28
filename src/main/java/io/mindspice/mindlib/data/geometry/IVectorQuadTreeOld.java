@@ -1,22 +1,20 @@
 package io.mindspice.mindlib.data.geometry;
 
-import io.mindspice.mindlib.data.collections.lists.LinkedNode;
-import io.mindspice.mindlib.data.collections.lists.SRLinkedList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
-import java.util.*;
 
-
-public class IVectorQuadTree<T> {
+public class IVectorQuadTreeOld<T> {
     private final Node root;
-    private final HashMap<T, LinkedNode<QuadItem<T>>> nodeMap = new HashMap<>(20);
 
-    public IVectorQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
+    public IVectorQuadTreeOld(IRect2 outerQuadrant, int maxPerQuadrant) {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
     public void insert(IVector2 position, T item) {
-        QuadItem<T> quadItem = new QuadItem<>(IVector2.ofMutable(position), item);
-        root.insert(quadItem);
+        root.insert(new QuadItem<>(IVector2.ofMutable(position), item));
     }
 
     public List<QuadItem<T>> query(IRect2 searchArea) {
@@ -30,37 +28,27 @@ public class IVectorQuadTree<T> {
         return queryRtnList;
     }
 
-    public boolean remove(T item) {
-        var node = nodeMap.get(item);
-        if (node != null) {
-            node.removeSelf();
-            return true;
-        }
-        return false;
+    public void remove(IVector2 position, T item) {
+        root.remove(position, item);
     }
 
     public QuadItem<T> removeAndGet(IVector2 position, T item) {
-        var node = nodeMap.get(item);
-        if (node != null) {
-            node.removeSelf();
-            return node.item();
-        }
-        return null;
+        return root.removeAndGet(position, item);
     }
 
     public boolean update(IVector2 oldPosition, IVector2 newPosition, T item) {
         return root.update(oldPosition, newPosition, item);
     }
 
-//    public void deFragment() {
-//        root.deFrag();
-//    }
-
+    public void deFragment() {
+        root.deFrag();
+    }
 
     private class Node {
         private final IRect2 quadrant;
-        private SRLinkedList<QuadItem<T>> items;
+        private QuadItem<T>[] items;
         private int capacity;
+        private int currCapacity = 0;
         private Node tLeftInnerQuad;
         private Node tRightInnerQuad;
         private Node bLeftInnerQuad;
@@ -68,11 +56,12 @@ public class IVectorQuadTree<T> {
         private boolean subdivided;
         private final Node parent;
 
+        @SuppressWarnings("unchecked")
         public Node(IRect2 quadrant, int capacity, Node parent) {
             this.quadrant = quadrant;
             this.capacity = capacity;
             this.parent = parent;
-            items = new SRLinkedList<>();
+            items = (QuadItem<T>[]) new QuadItem[capacity];
 
         }
 
@@ -85,14 +74,17 @@ public class IVectorQuadTree<T> {
                 return insertIntoSubQuad(item);
             }
 
-            if (items.size() < capacity) {
-                items.add(item);
+            if (currCapacity < capacity) {
+                items[currCapacity] = item;
+                currCapacity++;
                 return true;
             }
 
             if (quadrant.size().x() <= 16 || quadrant.size().y() <= 16) {
-                var node = items.add(item);
-                nodeMap.put(item.item(), node);
+                capacity = (int) (capacity * 1.5);
+                items = Arrays.copyOf(items, capacity);
+                items[currCapacity] = item;
+                currCapacity++;
                 return true;
             }
             subdivide();
@@ -103,22 +95,26 @@ public class IVectorQuadTree<T> {
             if (!quadrant.contains(position)) {
                 return false;
             }
+
             if (subdivided) {
                 return tLeftInnerQuad.update(position, newPosition, item)
                         || tRightInnerQuad.update(position, newPosition, item)
                         || bLeftInnerQuad.update(position, newPosition, item)
                         || bRightInnerQuad.update(position, newPosition, item);
             }
-            var node = items.getRootNode();
-            while ((node = node.nextNode()) != null) {
-                if (node.item().position().equals(position) && node.item().equals(item)) {
-                    QuadItem<T> foundItem = node.item();
+
+            for (int i = 0; i < currCapacity; i++) {
+                if (items[i].position().equals(position) && items[i].item().equals(item)) {
+                    QuadItem<T> foundItem = items[i];
                     foundItem.position().setXY(newPosition);
                     if (quadrant.contains(newPosition)) {
                         return true;
                     }
-                    node.removeSelf();
-                    backInsert(this, foundItem);
+                    System.arraycopy(items, i + 1, items, i, currCapacity - i - 1);
+                    currCapacity--;
+                    items[currCapacity] = null;
+
+                    return backInsert(this, foundItem);
                 }
             }
             return false;
@@ -139,16 +135,19 @@ public class IVectorQuadTree<T> {
             if (!quadrant.contains(position)) {
                 return false;
             }
+
             if (subdivided) {
                 return (tLeftInnerQuad.remove(position, item)
                         || tRightInnerQuad.remove(position, item)
                         || bLeftInnerQuad.remove(position, item)
                         || bRightInnerQuad.remove(position, item));
             }
-            var node = items.getRootNode();
-            while ((node = node.nextNode()) != null) {
-                if (node.item().position().equals(position) && node.item().equals(item)) {
-                    node.removeSelf();
+
+            for (int i = 0; i < currCapacity; i++) {
+                if (items[i].position().equals(position) && items[i].item().equals(item)) {
+                    System.arraycopy(items, i + 1, items, i, currCapacity - i - 1);
+                    currCapacity--;
+                    items[currCapacity] = null;
                     return true;
                 }
             }
@@ -159,6 +158,7 @@ public class IVectorQuadTree<T> {
             if (!quadrant.contains(position)) {
                 return null;
             }
+
             if (subdivided) {
                 QuadItem<T> found = tLeftInnerQuad.removeAndGet(position, item);
                 if (found != null) { return found; }
@@ -168,18 +168,21 @@ public class IVectorQuadTree<T> {
                 if (found != null) { return found; }
                 return bRightInnerQuad.removeAndGet(position, item);
             }
-            var node = items.getRootNode();
-            while ((node = node.nextNode()) != null) {
-                if (node.item().position().equals(position) && node.item().equals(item)) {
-                    QuadItem<T> foundItem = node.item();
-                    node.removeSelf();
-                    return foundItem;
+
+            for (int i = 0; i < currCapacity; i++) {
+                if (items[i].position().equals(position) && items[i].item().equals(item)) {
+                    QuadItem<T> tempItem = items[i];
+                    System.arraycopy(items, i + 1, items, i, currCapacity - i - 1);
+                    currCapacity--;
+                    items[currCapacity] = null;
+                    return tempItem;
                 }
             }
             return null;
         }
 
         void subdivide() {
+
             int centerX = quadrant.getCenter().x();
             int centerY = quadrant.getCenter().y();
             int halfWidth = quadrant.size().x() / 2;
@@ -197,16 +200,18 @@ public class IVectorQuadTree<T> {
             bRightInnerQuad = new Node(
                     IRect2.of(centerX, centerY, halfWidth, halfHeight), capacity, this
             );
-            var node = items.getRootNode();
-            while ((node = node.nextNode()) != null) {
-                insertIntoSubQuad(node.item());
+
+            for (int i = 0; i < currCapacity; i++) {
+                QuadItem<T> item = items[i];
+                insertIntoSubQuad(item);
             }
+
             items = null;
+            currCapacity = 0;
             subdivided = true;
         }
 
         private boolean insertIntoSubQuad(QuadItem<T> item) {
-
             // Insert the item into the appropriate sub-quadrant
             if (tLeftInnerQuad.quadrant.contains(item.position())) {
                 return tLeftInnerQuad.insert(item);
@@ -237,44 +242,41 @@ public class IVectorQuadTree<T> {
                 bLeftInnerQuad.query(searchArea, itemFound);
                 bRightInnerQuad.query(searchArea, itemFound);
             }
-            if (items == null) {
-                return;
-            }
-            var node = items.getRootNode();
-            while ((node = node.nextNode()) != null) {
-                if (searchArea.contains(node.item().position())) {
-                    itemFound.add(node.item());
+
+            for (int i = 0; i < currCapacity; ++i) {
+                if (searchArea.contains(items[i].position())) {
+                    itemFound.add(items[i]);
                 }
             }
         }
-//
-//        private void deFrag() {
-//            if (subdivided) {
-//                tLeftInnerQuad.deFrag();
-//                tRightInnerQuad.deFrag();
-//                bLeftInnerQuad.deFrag();
-//                bRightInnerQuad.deFrag();
-//
-//                if (areAllChildrenEmpty()) {
-//                    mergeChildren();
-//                }
-//            } else {
-//                sortItems();
-//                unSize();
-//            }
-//        }
 
-//        private void sortItems() {
-//            if (items == null) { return; }
-//            Arrays.sort(items, 0, currCapacity, Comparator.comparingInt(o -> o.position().x()));
-//        }
-//
-//        private void unSize() {
-//            if (capacity > root.capacity && currCapacity < (int) (root.capacity * 0.7)) {
-//                items = Arrays.copyOf(items, root.capacity);
-//                capacity = root.capacity;
-//            }
-//        }
+        private void deFrag() {
+            if (subdivided) {
+                tLeftInnerQuad.deFrag();
+                tRightInnerQuad.deFrag();
+                bLeftInnerQuad.deFrag();
+                bRightInnerQuad.deFrag();
+
+                if (areAllChildrenEmpty()) {
+                    mergeChildren();
+                }
+            } else {
+                sortItems();
+                unSize();
+            }
+        }
+
+        private void sortItems() {
+            if (items == null) { return; }
+            Arrays.sort(items, 0, currCapacity, Comparator.comparingInt(o -> o.position().x()));
+        }
+
+        private void unSize() {
+            if (capacity > root.capacity && currCapacity < (int) (root.capacity * 0.7)) {
+                items = Arrays.copyOf(items, root.capacity);
+                capacity = root.capacity;
+            }
+        }
 
         private boolean areAllChildrenEmpty() {
             return tLeftInnerQuad.isEmpty() && tRightInnerQuad.isEmpty() &&
@@ -287,7 +289,7 @@ public class IVectorQuadTree<T> {
         }
 
         private boolean isEmpty() {
-            return !subdivided && items.size() == 0;
+            return !subdivided && currCapacity == 0;
         }
 
         @Override
@@ -300,7 +302,9 @@ public class IVectorQuadTree<T> {
             sb.append(indent).append("Node: ").append(quadrant).append("\n");
 
             if (items != null) {
-                items.forEachNode(i -> sb.append(i).append("\n"));
+                for (int i = 0; i < currCapacity; i++) {
+                    sb.append(indent).append(" - Item: ").append(items[i]).append("\n");
+                }
             }
 
             if (subdivided) {
