@@ -124,7 +124,7 @@ public class geometryTest {
         int boundY = 1920;
 
         IRect2 bounds = IRect2.of(0, 0, boundX, boundY);
-        IVectorQuadTree<Object> quadTree = new IVectorQuadTree<>(bounds, 4); // 4 is the capacity per quadrant
+        IVectorQuadTree2<Object> quadTree = new IVectorQuadTree2<>(bounds, 4); // 4 is the capacity per quadrant
         for (int i = 0; i < 100; i++) {
             int x = ThreadLocalRandom.current().nextInt(boundX); // Random x-coordinate within bounds
             int y = ThreadLocalRandom.current().nextInt(boundY); // Random y-coordinate within bounds
@@ -162,7 +162,7 @@ public class geometryTest {
         int boundX = 81920;
         int boundY = 81920;
         IRect2 bounds = IRect2.of(0, 0, boundX, boundY);
-        IVectorQuadTree<Object> quadTree = new IVectorQuadTree<>(bounds, 6); // 4 is the capacity per quadrant
+        IVectorQuadTree2<Object> quadTree = new IVectorQuadTree2<>(bounds, 6); // 4 is the capacity per quadrant
         IKDTree2D<Object> spacMap = new IKDTree2D<>(bounds);
         // Random number generator
         Random rand = new Random();

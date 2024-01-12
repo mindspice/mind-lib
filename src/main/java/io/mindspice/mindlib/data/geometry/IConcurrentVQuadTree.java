@@ -1,7 +1,5 @@
 package io.mindspice.mindlib.data.geometry;
 
-import io.mindspice.mindlib.util.Utils;
-
 import java.util.*;
 import java.util.concurrent.locks.StampedLock;
 

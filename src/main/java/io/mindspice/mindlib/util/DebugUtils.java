@@ -1,11 +1,6 @@
 package io.mindspice.mindlib.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
-
-public class Utils {
+public class DebugUtils {
 
     public static void printThreadMethod() {
 
@@ -14,6 +9,27 @@ public class Utils {
         String className = stackTrace[2].getClassName();
         String threadName = Thread.currentThread().getName();
         System.out.println("Method called: " + className + "." + methodName + " on thread " + threadName);
+    }
+
+    public static String getThreadMethod() {
+
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        String methodName = stackTrace[2].getMethodName();
+        String className = stackTrace[2].getClassName();
+        String threadName = Thread.currentThread().getName();
+        return "Method called: " + className + "." + methodName + " on thread " + threadName;
+    }
+
+    public static void printStackTrace() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        for (StackTraceElement element : stackTrace) {
+            System.out.println(element);
+        }
+    }
+
+    public static StackTraceElement[] getStackTrace() {
+        return Thread.currentThread().getStackTrace();
+
     }
 
     public static void print(Object... objects) {

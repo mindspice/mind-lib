@@ -1,7 +1,6 @@
 package io.mindspice.mindlib.data.collections.lists;
 
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
 
 
 public class SRLinkedList<T> {

@@ -1,19 +1,24 @@
 package io.mindspice.mindlib.data.wrappers;
 
 public class LazyFinalValue<T> {
-    private T value;
+    private volatile T value;
     private volatile boolean isSet = false;
 
     public LazyFinalValue(T initialValue) { value = initialValue; }
 
     public LazyFinalValue() { this.value = null; }
 
-    public synchronized void set(T value) {
+    public void set(T value) {
         if (isSet) {
             throw new IllegalStateException("Value is already set");
         }
         this.value = value;
         this.isSet = true;
+    }
+
+    public void setOrIgnore(T value){
+        if (isSet) { return; }
+        value = value;
     }
 
     public boolean isFinal() { return isSet; }

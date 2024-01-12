@@ -99,8 +99,12 @@ public class IndexMap<T> {
         return -1;
     }
 
-    public T[] toArray() {
-        return Arrays.copyOf(elements, size);
+    public List<T> toList() {
+        List<T> returnList = new ArrayList<>(size);
+        for (int i = 0; i < size; ++i) {
+            returnList.add(elements[i]);
+        }
+        return returnList;
     }
 
     /**

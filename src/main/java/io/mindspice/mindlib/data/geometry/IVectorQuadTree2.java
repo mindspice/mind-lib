@@ -1,40 +1,37 @@
 package io.mindspice.mindlib.data.geometry;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import io.mindspice.mindlib.data.collections.lists.LinkedNode;
 import io.mindspice.mindlib.data.collections.lists.SRLinkedList;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
-public class IVectorQuadTree<T> {
+public class IVectorQuadTree2<T> {
     private final Node root;
-    private final TIntObjectMap<LinkedNode<QuadItemId<T>>> nodeMap = new TIntObjectHashMap<>(20);
+    private final HashMap<T, LinkedNode<QuadItem<T>>> nodeMap = new HashMap<>(20);
 
-    public IVectorQuadTree(IRect2 outerQuadrant, int maxPerQuadrant) {
+    public IVectorQuadTree2(IRect2 outerQuadrant, int maxPerQuadrant) {
         this.root = new Node(outerQuadrant, maxPerQuadrant, null);
     }
 
-    public void insert(int id, IVector2 position, T item) {
-        QuadItemId<T> quadItem = new QuadItemId<>(id, IVector2.ofMutable(position), item);
+    public void insert(IVector2 position, T item) {
+        QuadItem<T> quadItem = new QuadItem<>(IVector2.ofMutable(position), item);
         root.insert(quadItem);
     }
 
-    public List<QuadItemId<T>> query(IRect2 searchArea) {
-        List<QuadItemId<T>> foundItems = new ArrayList<>();
+    public List<QuadItem<T>> query(IRect2 searchArea) {
+        List<QuadItem<T>> foundItems = new ArrayList<>();
         root.query(searchArea, foundItems);
         return foundItems;
     }
 
-    public List<QuadItemId<T>> query(IRect2 searchArea, List<QuadItemId<T>> queryRtnList) {
+    public List<QuadItem<T>> query(IRect2 searchArea, List<QuadItem<T>> queryRtnList) {
         root.query(searchArea, queryRtnList);
         return queryRtnList;
     }
 
-    public boolean remove(int id) {
-        LinkedNode<QuadItemId<T>> node = nodeMap.get(id);
+    public boolean remove(T item) {
+        var node = nodeMap.get(item);
         if (node != null) {
             node.removeSelf();
             return true;
@@ -42,9 +39,17 @@ public class IVectorQuadTree<T> {
         return false;
     }
 
-    public boolean update(int id, IVector2 newPosition) {
-        IVector2 oldPosition = nodeMap.get(id).item().position();
-        return root.update(oldPosition, newPosition, id);
+    public QuadItem<T> removeAndGet(IVector2 position, T item) {
+        var node = nodeMap.get(item);
+        if (node != null) {
+            node.removeSelf();
+            return node.item();
+        }
+        return null;
+    }
+
+    public boolean update(IVector2 oldPosition, IVector2 newPosition, T item) {
+        return root.update(oldPosition, newPosition, item);
     }
 
 //    public void deFragment() {
@@ -54,7 +59,7 @@ public class IVectorQuadTree<T> {
 
     private class Node {
         private final IRect2 quadrant;
-        private SRLinkedList<QuadItemId<T>> items;
+        private SRLinkedList<QuadItem<T>> items;
         private int capacity;
         private Node tLeftInnerQuad;
         private Node tRightInnerQuad;
@@ -71,7 +76,7 @@ public class IVectorQuadTree<T> {
 
         }
 
-        boolean insert(QuadItemId<T> item) {
+        boolean insert(QuadItem<T> item) {
             if (!quadrant.contains(item.position())) {
                 return false;
             }
@@ -81,34 +86,33 @@ public class IVectorQuadTree<T> {
             }
 
             if (items.size() < capacity) {
-                LinkedNode<QuadItemId<T>> node = items.add(item);
-                nodeMap.put(item.id(), node);
+                items.add(item);
                 return true;
             }
 
             if (quadrant.size().x() <= 16 || quadrant.size().y() <= 16) {
-                LinkedNode<QuadItemId<T>> node = items.add(item);
-                nodeMap.put(item.id(), node);
+                var node = items.add(item);
+                nodeMap.put(item.item(), node);
                 return true;
             }
             subdivide();
             return insertIntoSubQuad(item);
         }
 
-        public boolean update(IVector2 oldPosition, IVector2 newPosition, int id) {
-            if (!quadrant.contains(oldPosition)) {
+        public boolean update(IVector2 position, IVector2 newPosition, T item) {
+            if (!quadrant.contains(position)) {
                 return false;
             }
             if (subdivided) {
-                return tLeftInnerQuad.update(oldPosition, newPosition, id)
-                        || tRightInnerQuad.update(oldPosition, newPosition, id)
-                        || bLeftInnerQuad.update(oldPosition, newPosition, id)
-                        || bRightInnerQuad.update(oldPosition, newPosition, id);
+                return tLeftInnerQuad.update(position, newPosition, item)
+                        || tRightInnerQuad.update(position, newPosition, item)
+                        || bLeftInnerQuad.update(position, newPosition, item)
+                        || bRightInnerQuad.update(position, newPosition, item);
             }
             var node = items.getRootNode();
             while ((node = node.nextNode()) != null) {
-                if (node.item().position().equals(oldPosition) && node.item().id() == id) {
-                    QuadItemId<T> foundItem = node.item();
+                if (node.item().position().equals(position) && node.item().equals(item)) {
+                    QuadItem<T> foundItem = node.item();
                     foundItem.position().setXY(newPosition);
                     if (quadrant.contains(newPosition)) {
                         return true;
@@ -120,7 +124,7 @@ public class IVectorQuadTree<T> {
             return false;
         }
 
-        public boolean backInsert(Node node, QuadItemId<T> item) {
+        public boolean backInsert(Node node, QuadItem<T> item) {
             boolean success = node.insert(item);
             if (success) {
                 return true;
@@ -151,12 +155,12 @@ public class IVectorQuadTree<T> {
             return false;
         }
 
-        QuadItemId<T> removeAndGet(IVector2 position, T item) {
+        QuadItem<T> removeAndGet(IVector2 position, T item) {
             if (!quadrant.contains(position)) {
                 return null;
             }
             if (subdivided) {
-                QuadItemId<T> found = tLeftInnerQuad.removeAndGet(position, item);
+                QuadItem<T> found = tLeftInnerQuad.removeAndGet(position, item);
                 if (found != null) { return found; }
                 found = tRightInnerQuad.removeAndGet(position, item);
                 if (found != null) { return found; }
@@ -167,7 +171,7 @@ public class IVectorQuadTree<T> {
             var node = items.getRootNode();
             while ((node = node.nextNode()) != null) {
                 if (node.item().position().equals(position) && node.item().equals(item)) {
-                    QuadItemId<T> foundItem = node.item();
+                    QuadItem<T> foundItem = node.item();
                     node.removeSelf();
                     return foundItem;
                 }
@@ -201,7 +205,7 @@ public class IVectorQuadTree<T> {
             subdivided = true;
         }
 
-        private boolean insertIntoSubQuad(QuadItemId<T> item) {
+        private boolean insertIntoSubQuad(QuadItem<T> item) {
 
             // Insert the item into the appropriate sub-quadrant
             if (tLeftInnerQuad.quadrant.contains(item.position())) {
@@ -222,7 +226,7 @@ public class IVectorQuadTree<T> {
 
         }
 
-        void query(IRect2 searchArea, List<QuadItemId<T>> itemFound) {
+        void query(IRect2 searchArea, List<QuadItem<T>> itemFound) {
             if (!quadrant.intersects(searchArea)) {
                 return;
             }

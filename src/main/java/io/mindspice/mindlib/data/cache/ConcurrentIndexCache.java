@@ -170,6 +170,15 @@ public class ConcurrentIndexCache<T> {
         return currSize;
     }
 
+    public List<T> getAsList() {
+        long stamp = lock.readLock();
+        try {
+            return elements.toList();
+        } finally {
+            lock.unlockRead(stamp);
+        }
+    }
+
     public List<T> invalidateAndGet(long ageDelta) {
         List<T> removals = new ArrayList<>(size / 20);
         if (!isTimeStamped) {

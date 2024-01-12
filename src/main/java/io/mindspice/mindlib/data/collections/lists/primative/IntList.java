@@ -41,9 +41,13 @@ public class IntList {
 
     public boolean contains(int val) {
         for (int i = 0; i < size; ++i) {
-            if (dataElements[i] == val) return true;
+            if (dataElements[i] == val) { return true; }
         }
         return false;
+    }
+
+    public void trimToSize() {
+        dataElements = Arrays.copyOf(dataElements, size);
     }
 
     public int[] toArray() {
@@ -85,12 +89,12 @@ public class IntList {
     }
 
     public int get(int index) {
-        if (index < 0 || index > size -1) { throw new ArrayIndexOutOfBoundsException(); }
+        if (index < 0 || index > size - 1) { throw new ArrayIndexOutOfBoundsException(); }
         return dataElements[index];
     }
 
     public void set(int index, int integer) {
-        if (index < 0 || index > size -1) { throw new ArrayIndexOutOfBoundsException(); }
+        if (index < 0 || index > size - 1) { throw new ArrayIndexOutOfBoundsException(); }
         dataElements[index] = integer;
     }
 
@@ -106,14 +110,13 @@ public class IntList {
         return true;
     }
 
-
     public boolean addAll(IntList list) {
         int requiredCapacity = size + list.size();
         if (dataElements.length < requiredCapacity) {
             int newCapacity = Math.max(dataElements.length * 2, requiredCapacity);
             dataElements = Arrays.copyOf(dataElements, newCapacity);
         }
-        for(int i = 0; i < list.size; ++i) {
+        for (int i = 0; i < list.size; ++i) {
             dataElements[size++] = list.dataElements[i];
         }
         return true;
@@ -126,7 +129,7 @@ public class IntList {
             dataElements = Arrays.copyOf(dataElements, newCapacity);
         }
 
-        for(int i = 0; i < arr.length; ++i) {
+        for (int i = 0; i < arr.length; ++i) {
             dataElements[size++] = arr[i];
         }
 
@@ -134,16 +137,20 @@ public class IntList {
     }
 
     public boolean removeAtIndex(int index) {
-        if (index >= size || index < 0) return false;
+        if (index >= size || index < 0) { return false; }
         System.arraycopy(dataElements, index + 1, dataElements, index, size - index - 1);
         size--;
         return true;
     }
 
-
     public void clear() {
         dataElements = new int[10];
         size = 0;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(dataElements);
     }
 
     @Override
@@ -157,11 +164,11 @@ public class IntList {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj) { return true; }
+        if (obj == null || getClass() != obj.getClass()) { return false; }
 
         IntList other = (IntList) obj;
-        if (size != other.size) return false;
+        if (size != other.size) { return false; }
 
         for (int i = 0; i < size; i++) {
             if (dataElements[i] != other.dataElements[i]) {
