@@ -1,7 +1,11 @@
 package io.mindspice.mindlib.data.collections;
 
+import io.mindspice.mindlib.data.collections.lists.CyclicList;
+import io.mindspice.mindlib.data.collections.lists.primative.IntList;
 import io.mindspice.mindlib.data.collections.other.GridArray;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 
 public class OtherTests {
@@ -67,6 +71,48 @@ public class OtherTests {
                 System.out.println(ga.get(i,j));
             }
         }
+    }
+
+    @Test
+    void cyclicListTest() {
+        var lst = new CyclicList<>(List.of(0,1,2,3,4));
+
+        for (int i = 0; i < 100; ++ i) {
+            assert lst.getNext() == i % 5;
+        }
+
+        lst.remove(4);
+
+        for (int i = 0; i < 100; ++ i) {
+            assert lst.getNext() == i % 4;
+        }
+
+        assert lst.contains(1);
+
+        lst.addAll(List.of(4,5,6,7,8,9,10));
+
+        lst.resetIndex();
+
+        for (int i = 0; i < 100; ++ i) {
+            assert lst.getNext() == i % 11;
+
+        }
+
+        lst.remove(10);
+        lst.resetIndex();
+
+        for (int i = 0; i < 100; ++ i) {
+            assert lst.getNext() == i % 10;
+        }
+
+        lst.removeAll(List.of(5, 6,7,8,9,10));
+
+        lst.resetIndex();
+
+        for (int i = 0; i < 100; ++ i) {
+            assert lst.getNext() == i % 5;
+        }
+
     }
 
 

@@ -16,7 +16,7 @@ class DoubleListTest {
         var d = new DoubleList();
         d.addAll(List.of(0d, 34d, 43d, 2d, 34d, 32d));
         assertEquals(d.size(), 6);
-        d.remove(0);
+        d.removeAtIndex(0);
         assertEquals(d.size(), 5);
         d.add(23);
         d.add(0.45234);

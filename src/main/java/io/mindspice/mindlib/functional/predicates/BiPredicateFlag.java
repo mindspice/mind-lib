@@ -1,13 +1,14 @@
 package io.mindspice.mindlib.functional.predicates;
 
 import io.mindspice.mindlib.data.wrappers.LazyFinalValue;
+import io.mindspice.mindlib.data.wrappers.MutableBoolean;
 
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 
 public class BiPredicateFlag<T, U> implements BiPredicate<T, U> {
-    private final LazyFinalValue<Boolean> value = LazyFinalValue.of(false);
+    private final MutableBoolean value = MutableBoolean.of(false);
     private final BiPredicate<T, U> predicate;
 
     public BiPredicateFlag(BiPredicate<T, U> predicate) {
@@ -24,11 +25,15 @@ public class BiPredicateFlag<T, U> implements BiPredicate<T, U> {
 
     public boolean test(T t, U u) {
         if (predicate.test(t, u)) {
-            value.setOrIgnore(true);
+            value.setTrue();
             return true;
         } else {
             return false;
         }
+    }
+
+    public void reset() {
+        value.setFalse();
     }
 
 }

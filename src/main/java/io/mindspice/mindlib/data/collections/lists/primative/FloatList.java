@@ -128,7 +128,28 @@ public class FloatList {
         return true;
     }
 
-    public boolean remove(int index) {
+    public boolean removeAllValuesOf(float value) {
+        boolean found = false;
+        for (int i = 0; i < size; ++i) {
+            if (dataElements[i] == value) {
+                found = true;
+                removeAtIndex(i);
+            }
+        }
+        return found;
+    }
+
+    public boolean removeFirstValueOf(float value) {
+        for (int i = 0; i < size; ++i) {
+            if (dataElements[i] == value) {
+                removeAtIndex(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean removeAtIndex(int index) {
         if (index >= size || index < 0) return false;
         System.arraycopy(dataElements, index + 1, dataElements, index, size - index - 1);
         size--;

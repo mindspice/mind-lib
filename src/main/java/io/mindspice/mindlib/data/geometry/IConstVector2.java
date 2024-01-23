@@ -123,6 +123,20 @@ public record IConstVector2(
         return Math.sqrt((x * x) + (y * y));
     }
 
+    @Override
+    public float distanceTo(IVector2 other) {
+        float dx = this.x - other.x();
+        float dy = this.y - other.y();
+        return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    @Override
+    public int distanceToInt(IVector2 other) {
+        float dx = this.x - other.x();
+        float dy = this.y - other.y();
+        return (int) Math.round(Math.sqrt(dx * dx + dy * dy));
+    }
+
     public String toString() {
         return "(" + x + ", " + y + ")";
     }

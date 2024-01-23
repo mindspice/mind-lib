@@ -8,7 +8,7 @@ public class LazyFinalValue<T> {
 
     public LazyFinalValue() { this.value = null; }
 
-    public void set(T value) {
+    public void setOrThrow(T value) {
         if (isSet) {
             throw new IllegalStateException("Value is already set");
         }
@@ -18,7 +18,8 @@ public class LazyFinalValue<T> {
 
     public void setOrIgnore(T value){
         if (isSet) { return; }
-        value = value;
+        this.value = value;
+        this.isSet = true;
     }
 
     public boolean isFinal() { return isSet; }

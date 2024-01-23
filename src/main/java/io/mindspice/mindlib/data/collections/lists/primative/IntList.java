@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 
 public class IntList {
@@ -136,6 +137,27 @@ public class IntList {
         return true;
     }
 
+    public boolean removeAllValuesOf(int value) {
+        boolean found = false;
+        for (int i = 0; i < size; ++i) {
+            if (dataElements[i] == value) {
+                found = true;
+                removeAtIndex(i);
+            }
+        }
+        return found;
+    }
+
+    public boolean removeFirstValueOf(int value) {
+        for (int i = 0; i < size; ++i) {
+            if (dataElements[i] == value) {
+                removeAtIndex(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean removeAtIndex(int index) {
         if (index >= size || index < 0) { return false; }
         System.arraycopy(dataElements, index + 1, dataElements, index, size - index - 1);
@@ -146,6 +168,10 @@ public class IntList {
     public void clear() {
         dataElements = new int[10];
         size = 0;
+    }
+
+    public IntStream stream() {
+        return IntStream.of(dataElements);
     }
 
     @Override

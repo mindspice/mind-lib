@@ -178,6 +178,20 @@ public class IMutVector2 implements IVector2 {
     }
 
     @Override
+    public float distanceTo(IVector2 other) {
+        float dx = this.x - other.x();
+        float dy = this.y - other.y();
+        return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    @Override
+    public int distanceToInt(IVector2 other) {
+        float dx = this.x - other.x();
+        float dy = this.y - other.y();
+        return (int) Math.round(Math.sqrt(dx * dx + dy * dy));
+    }
+
+    @Override
     public String toString() {
         return "(" + x + ", " + y + ")";
     }

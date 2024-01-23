@@ -41,6 +41,10 @@ public interface IVector2 {
 
     double magnitude();
 
+    float distanceTo(IVector2 other);
+
+    int distanceToInt(IVector2 other);
+
     int x();
 
     int y();
@@ -79,6 +83,28 @@ public interface IVector2 {
 
     static IAtomicVector2 ofAtomic(IVector2 other) {
         return new IAtomicVector2(other);
+    }
+
+    static IVector2 lerp(IVector2 start, IVector2 end, float t) {
+        float x = start.x() + t * (end.x() - start.x());
+        float y = start.y() + t * (end.y() - start.y());
+        return IVector2.of(x, y);
+    }
+
+    static IMutVector2 mutZero() {
+        return new IMutVector2(0, 0);
+    }
+
+    static IConstVector2 zero() {
+        return new IConstVector2(0, 0);
+    }
+
+    static IMutVector2 mutNegOne() {
+        return new IMutVector2(-1, -1);
+    }
+
+    static IConstVector2 negOne() {
+        return new IConstVector2(-1, -1);
     }
 
 
